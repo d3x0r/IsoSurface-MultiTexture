@@ -220,25 +220,7 @@ fragmentShader:`
 				, (cxy.a * abs(zzNormal.z)) + (cyz.a * abs(zzNormal.x)) + (cxz.a * abs(zzNormal.y)) );
 
 //                      diffuseColor =  (cxy * abs(zzNormal.z)) + (cyz * abs(zzNormal.x)) + (cxz * abs(zzNormal.y));
-
-//diffuseColor =  vec4(sclr, 1.0-sclr, 0.0, 1.0);
- diffuseColor =  (cxz * abs(zzNormal.y));
-// diffuseColor =  (cxy * abs(zzNormal.z));
-// diffuseColor =  (cyz * abs(zzNormal.x));
-if(0.0 > 0.0)
-if( modulo.x/8.0 < 0.5 ) {
-   diffuseColor =  (cxz1 * abs(zzNormal.y));
-   diffuseColor.g = 1.0-sclr;
-} else if( modulo.x/8.0 < 1.5 )   {
-  diffuseColor =  (cxz2 * abs(zzNormal.y));
-  diffuseColor.r = sclr;
- } else   {
-  diffuseColor =  (cxy * abs(zzNormal.y));
-}
-diffuseColor.a = 1.0;
-// diffuseColor =  (cxz1 * abs(zzNormal.y));
-//diffuseColor.r = sclr;
-                     
+                    
                      // diffuseColor =  vec4( vec3( abs(zzNormal.x),abs(zzNormal.y),abs(zzNormal.z) ), 1.0 ) ;
 
                     //if( edge_only > 0.5 )

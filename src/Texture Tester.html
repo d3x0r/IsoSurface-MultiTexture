@@ -322,9 +322,10 @@
 	  wiremesh.position.y = surfacemesh.position.y = -(bb.max.y + bb.min.y) / 2.0;
 	  wiremesh.position.z = surfacemesh.position.z = -(bb.max.z + bb.min.z) / 2.0;
 		}
-
+	
+		window.doInit = ()=>{
 		if( !init() )	animate();
-
+		}
 		// init the scene
 		function init(){
 
@@ -459,7 +460,7 @@
 			ms.onchange = updateMesh;
 
 			document.getElementById("showfacets").checked = true;
-			document.getElementById("showedges").checked  = true;
+			document.getElementById("showedges").checked  = false;
 
 			var is;
 			is = document.getElementById( "inflation" );
@@ -470,11 +471,14 @@
 			is.onchange = updateMesh;
 			is = document.getElementById( "smoothShade" );
 			is.onchange = updateMesh;
+			is.checked = true;
 			is = document.getElementById( "showNormal" );
 			is.checked = true;
 			is.onchange = updateMesh;
 			is = document.getElementById( "showGrid" );
 			is.onchange = updateMesh;
+			is.checked = true;
+
 			is = document.getElementById( "fillOutside" );
 			is.onchange = updateTestData;
 			is = document.getElementById( "fillInside" );
