@@ -1,5 +1,5 @@
 
-const root = "./images/";
+const root = "./src/images/";
 const Textures = [
 	root+"texture-layer-1.png", root+"texture-layer-2.png"
         , root+"texture-layer-3.png"
