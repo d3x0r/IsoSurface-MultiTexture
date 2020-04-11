@@ -1,0 +1,71 @@
+
+
+const root = "./images/";
+const Textures = [
+	root+"texture-layer-1.png", root+"texture-layer-2.png"
+        , root+"texture-layer-3.png"
+        , root+"texture-layer-4.png"
+        , root+"texture-layer-5.png"
+        , root+"texture-layer-6.png"
+]
+
+
+function loadATexture( n, cb ) {
+	{
+		try {
+			xhrObj.open('GET', Textures[n] );
+			xhrObj.responseType = "blob";
+                        
+			//xhrObj.responseType = "text";
+			//xhrObj.response = "";
+			xhrObj.send(null);
+			xhrObj.onerror = (err)=>{
+				  //console.log( "require ", n );
+				      console.log( err );
+				      cb();
+				      return;
+			};
+			xhrObj.onload = ()=>{
+				if( xhrObj.status === 200 && xhrObj.response.size > 0 ) {
+					( t.image = new Image() );
+			   		var reader = new FileReader();
+					reader.onload = function(e) {
+						t.image.src = t.textureData = e.target.result;
+					        
+//						( t.image = new Image() ).src = 'data:image/png;base64,' + b64Response;
+                                                
+						//t.textureData = xhrObj.responseText;
+						t.image.onerror = (err)=>{ console.log( "image load error?", err)}
+						//console.log( t );
+						if( true || !t.image.width )
+						{
+							t.image.onload = ()=> {
+								 //console.log( "Waited until load to setup coords", t)
+							   t.textureCoords = Voxelarium.TextureAtlas.add( t.image )
+						  }
+						} else {
+							//console.log( "don't have to delay load?")
+						  //t.textureCoords = Voxelarium.TextureAtlas.add( t.image )
+				  	  	}
+						loadAVoxel( n+1, cb );
+					};
+					reader.readAsDataURL(xhrObj.response);
+				}else 								
+					loadAVoxel( n+1, cb );
+
+			}
+			//require( `./voxels/voxel_${n}.js` )
+		}
+		catch( err ) {
+			console.log( "require ", n );
+	        	console.log( err );
+				cb();
+		}
+	}
+
+}
+
+
+
+
+export { Textures };
