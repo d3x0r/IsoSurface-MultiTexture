@@ -295,6 +295,8 @@
 			if( document.getElementById("showGrid").checked )
 			{
 				material	= THREE.GridGeometryMaterial();
+				material.uniforms.textureMap3.value = window.ttCommon.stack.smudge();
+
 				surfacemesh	= new THREE.Mesh( geometry, material );
 				//cluster.THREE_solid.add( sector.THREE_solid = new THREE.Mesh( sector.solid_geometry.geometry, geometryShader ) );
 			}else {
@@ -320,24 +322,35 @@
 	  wiremesh.position.y = surfacemesh.position.y = -(bb.max.y + bb.min.y) / 2.0;
 	  wiremesh.position.z = surfacemesh.position.z = -(bb.max.z + bb.min.z) / 2.0;
 		}
-
+	
+		window.doInit = ()=>{
 		if( !init() )	animate();
-
+		}
 		// init the scene
 		function init(){
 
+			var canvas = document.createElement( 'canvas' );
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+			var context = canvas.getContext( 'webgl2', { alpha: false, antialias: true } );
 			if( Detector.webgl ){
 				renderer = new THREE.WebGLRenderer({
+					canvas: canvas, context: context,
 					antialias		: true,	// to get smoother output
 					preserveDrawingBuffer	: true	// to allow screenshot
 				});
+				//console.log( "YES?", renderer );
 				renderer.setClearColor( 0xBBBBBB, 1 );
 			}else{
-			  renderer = new THREE.CanvasRenderer();
+			  renderer = new THREE.WebGLRenderer({
+					canvas: canvas, context: context,
+					canvas : undefined,
+					context : undefined,
+				});
 			}
 
 			renderer.setSize( window.innerWidth, window.innerHeight );
-			document.getElementById('container').appendChild(renderer.domElement);
+			document.getElementById('container').appendChild(canvas);
 
 			// add Stats.js - https://github.com/mrdoob/stats.js
 			stats = new Stats();
@@ -447,7 +460,7 @@
 			ms.onchange = updateMesh;
 
 			document.getElementById("showfacets").checked = true;
-			document.getElementById("showedges").checked  = true;
+			document.getElementById("showedges").checked  = false;
 
 			var is;
 			is = document.getElementById( "inflation" );
@@ -458,11 +471,14 @@
 			is.onchange = updateMesh;
 			is = document.getElementById( "smoothShade" );
 			is.onchange = updateMesh;
+			is.checked = true;
 			is = document.getElementById( "showNormal" );
 			is.checked = true;
 			is.onchange = updateMesh;
 			is = document.getElementById( "showGrid" );
 			is.onchange = updateMesh;
+			is.checked = true;
+
 			is = document.getElementById( "fillOutside" );
 			is.onchange = updateTestData;
 			is = document.getElementById( "fillInside" );
