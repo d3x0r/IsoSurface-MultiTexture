@@ -13,77 +13,45 @@ function createTestElementData() {
 	
 	function makeVolume(dims, f) {
 		return memoize( function(field, fill) {
-			var res = new Array(3);
-			for(var i=0; i<3; ++i) {
-				res[i] = 2 + Math.ceil((dims[i][1] - dims[i][0]) / dims[i][2]);
-			}
+			var res = field.dims;// = new Array(3);
+			//for(var i=0; i<3; ++i) {
+			//	res[i] = 2 + Math.ceil((dims[i][1] - dims[i][0]) / dims[i][2]);
+			//}
 
-			var volume = new Float32Array((res[0]+(fill?2:0)) * (res[1]+(fill?2:0)) * (res[2]+(fill?2:0)))
+			var volume = new Float32Array((res[0]) * (res[1]) * (res[2]))
 				, n = 0;
-			if( fill )
-			for(var k=0; k < 1; k++ )
-			for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
-			for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
-				if( fill < 0 ){
-					if( field.data[n] >= 0 )
-						volume[n] = 0;
-					else
-						volume[n] = 1 + ( (7 * Math.random())|0 );
-				}
-				if( fill > 0 ) {
-					if( field.data[n] >= 0 )
-						volume[n] = 0;
-					else
-						volume[n] = 1 + ( (7 * Math.random())|0 );
-				}
-			}
-			for(var k=0, z=dims[2][0]-dims[2][2]; k<res[2]; ++k, z+=dims[2][2])
-			for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
-			for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
-				if( j < 0 || i < 0 || j == res[1] || i == res[0]){
-					if( fill < 0 )
-						if( field.data[n] >= 0 )
-							volume[n] = 0;
+
+			
+
+			for(var k=0 ; k<res[2]; ++k )
+			for(var j=0 ; j<res[1]; ++j)
+			for(var i=0 ; i<res[0]; ++i, ++n) {
+				if( fill ) {
+					if( (k===0 ) || ( j === 0 ) || ( i ===  0 ) || ( i  === (res[0]-1) ) || ( j === (res[1]-1) ) || ( k === (res[2]-1) ) ) {
+						if( fill < 0 )
+							volume[n] = 0; 
 						else
 							volume[n] = 1 + ( (7 * Math.random())|0 );
-					else if( fill > 0 )
-						if( field.data[n] >= 0 )
-							volume[n] = 0;
-						else
-							volume[n] = 1 + (6 * Math.random())|0;
-					else n--;
-				}else {
-					if( y > -1 )
-						if( field.data[n] >= 0 )
-							volume[n] = 0;
-						else
-							volume[n] = 1 + ((4+((y+12.50)*5))%7)|0;
-					else
-						if( field.data[n] >= 0 )
-							volume[n] = 0;
-						else
-							volume[n] = 1 + (7 * Math.random())|0;
-				}
-					//volume[n] = f(x,y,z);
-			}
-			if( fill )
-			for(var k=0; k < 1; k++ )
-			for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
-			for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
-				if( fill < 0 )
+						continue;
+					}
+				} 
+				if( j > 6 )
 					if( field.data[n] >= 0 )
 						volume[n] = 0;
 					else
-						volume[n] = (7 * Math.random())|0;
-				if( fill > 0 )
+						volume[n] = 1 + (((j-7) / 3 )|0);
+				else if( j > 3 )
 					if( field.data[n] >= 0 )
 						volume[n] = 0;
 					else
-						volume[n] = (7 * Math.random())|0;
+						volume[n] = 1;
+				else
+					if( field.data[n] >= 0 )
+						volume[n] = 0;
+					else
+						volume[n] = 1 + (7 * Math.random())|0;
 			}
-			res[0] = res[0] + (fill?2:0);
-			res[1] = res[1] + (fill?2:0);
-			res[2] = res[2] + (fill?2:0);
+
 			return {data: volume, dims:res};
 		});
 	}
