@@ -25,6 +25,7 @@
 
 	<script src="./src/perlinnoise.js"></script>
 	<script src="./src/testdata.js"></script>
+	<script src="./src/testelement.js"></script>
 
 		<link href="./src/main.css" rel="stylesheet">
 	</head>
@@ -71,6 +72,7 @@
 			,  'Naive Surface Nets': SurfaceNets
 		};
 		var testdata = {};
+		var testelements = {};
 
 		function updateMesh() {
 
@@ -91,7 +93,12 @@
 			, field  = testdata[ document.getElementById("datasource").value ]( document.getElementById("fillOutside")?.checked?-1
 			          :document.getElementById("fillInside")?.checked?1
 			          :0
-			 );
+			 )
+
+			, fieldElements  = testelements[ document.getElementById("datasource").value ]( document.getElementById("fillOutside")?.checked?-1
+			          :document.getElementById("fillInside")?.checked?1
+			          :0
+);
 
 			var start = (new Date()).getTime();
 			var inflatVal = document.getElementById( "inflation" ).value;
@@ -129,6 +136,7 @@
 
 	  var opts;
 	  var result = mesher( newData, field.dims, opts = {
+                  elements : fieldElements,
 		  minimize : document.getElementById( "minimize" ).checked,
 		  maximize : document.getElementById( "maximize" ).checked,
 		  inflation : inflatVal,
@@ -447,6 +455,7 @@
 
 			//Initialize dom elements
 			testdata = createTestData(0);
+			testelements = createTestElementData();
 			var ds = document.getElementById("datasource");
 			for(var id in testdata) {
 			  ds.add(new Option(id, id), null);
@@ -490,6 +499,7 @@
 				testdata = createTestData( document.getElementById("fillOutside")?.checked?-1
 			          :document.getElementById("fillInside")?.checked?1
 			          :0);
+				testelements = createTestElementData( );
 				updateMesh();
 			}
 
