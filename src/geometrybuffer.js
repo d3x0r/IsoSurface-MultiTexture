@@ -5,15 +5,18 @@ const attribs = ["position","uv"
 , "in_Color", "in_FaceColor", "in_Modulous"
 , "normal", "in_Pow", "in_flat_color"
 , "in_use_texture", "in_decal_texture", "in_face_index"
-, "copies" 
+, "copies" /*internal*/, "types1", "types2", "typeDelta"
+, "simplex"
 ];  
-const attrib_bytes =     [4,4, 1,1,4, 4,4, 1,1,1,4 , 1]
-const attrib_sizes =     [3,2, 4,4,3, 3,1, 1,1,1,3 , 1] // counts really
-const attrib_normalize = [false,false, true,true,0, true,0, 0,1,0,0, 0]
+const attrib_bytes =     [4,4, 1,1,4, 4,4, 1,1,1,4 , 1,2,2,4 ,4]
+const attrib_sizes =     [3,2, 4,4,3, 3,1, 1,1,1,3 , 1,3,3,3 ,3] // counts really
+const attrib_normalize = [false,false, true,true,0, true,0, 0,1,0,0, 0,0,0,0 ,0]
 const attrib_buftype = [Float32Array,Float32Array
     ,Uint8Array,Uint8Array,Float32Array
     ,Float32Array,Float32Array
-    , Uint8Array,Uint8Array, Uint8Array, Uint32Array, Uint8Array ]
+    , Uint8Array,Uint8Array, Uint8Array, Uint32Array
+    , Uint8Array, Uint16Array, Uint16Array, Float32Array
+   , Float32Array ]
 
 THREE.GridGeometryBuffer = GeometryBuffer;
 
@@ -27,7 +30,6 @@ function GeometryBuffer() {
     // create a simple square shape. We duplicate the top left and bottom right
     // vertices because each vertex needs to appear once per triangle.
     buffer.position     = new Float32Array( [] );
-    buffer.copies       = new Uint8Array( [] );
     buffer.uv           = new Float32Array( [] );
     buffer.in_Color     = new Uint8Array( [] );
     buffer.in_FaceColor = new Uint8Array( [] );
@@ -38,6 +40,14 @@ function GeometryBuffer() {
     buffer.in_decal_texture = new Uint8Array( [] );
     buffer.in_Modulous = new Int8Array( [] );
     buffer.in_face_index = new Uint32Array( [] );
+
+    buffer.copies       = new Uint8Array( [] );
+    buffer.types1 = new Uint16Array( [] );
+    buffer.types2 = new Uint16Array( [] );
+    buffer.typeDelta  = new Float32Array( [] );
+
+    buffer.simplex = new Float32Array( [] );
+
     buffer.available = 0;
     buffer.used = 0;
     buffer.availableFaces = 0;
@@ -50,6 +60,7 @@ function GeometryBuffer() {
     }
 
     attribs.forEach( (att,index)=>{
+	if( att === "copies" ) return;
       buffer.geometry.setAttribute( att, new THREE.BufferAttribute( buffer[att], attrib_sizes[index], attrib_normalize[index] ))
     })
 
@@ -61,10 +72,10 @@ function GeometryBuffer() {
          this.available = ( this.available + 1 ) * 2;
 
           attribs.forEach( (att,index)=>{
-              if( att === "in_face_index") return;
-            newbuf =   new attrib_buftype[index]( new ArrayBuffer( this.available * ( attrib_bytes[index] * attrib_sizes[index] ) ) );
-            newbuf.set( buffer[att] );
-            buffer[att] = newbuf;
+		if( att === "in_face_index") return;
+		newbuf =   new attrib_buftype[index]( new ArrayBuffer( this.available * ( attrib_bytes[index] * attrib_sizes[index] ) ) );
+		newbuf.set( buffer[att] );
+            	buffer[att] = newbuf;
             // need new subarrays.
             if( att === "normal" ) {
                 for( var p of this.resultedPoints ) p.normalBuffer = newbuf.subarray(p.id*3, p.id*3+3);
@@ -87,6 +98,7 @@ function GeometryBuffer() {
     buffer.markDirty = function () {
 
          attribs.forEach( (att)=>{
+		if( att === "copies" ) return;
              var attrib = this.geometry.getAttribute(att);
              attrib.needsUpdate = true;
              attrib.array = buffer[att];
@@ -98,7 +110,7 @@ function GeometryBuffer() {
          //console.log( "dirty", this.geometry.attributes );
      }
 
-     buffer.addPoint = function( v, t, tBase, c, fc, n, p, ut, flat, dt, mod ) {
+     buffer.addPoint = function( v, t, tBase, c, fc, n, p, ut, flat, dt, mod, type1, type2, typeDelta ) {
          if( this.used >= this.available )
             this.expand();
             const u2 = this.used * 2;
@@ -139,20 +151,56 @@ function GeometryBuffer() {
         this.in_Modulous[u3 + 0] = mod[0];
         this.in_Modulous[u3 + 1] = mod[1];
         this.in_Modulous[u3 + 2] = mod[2];
+
         let result = {
             id:this.used++,
             normalBuffer:this.normal.subarray(u3,u3+3),
             vertBuffer:this.position.subarray(u3,u3+3),
+		type1:type1, type2:type2, typeDelta:typeDelta, // saved just as meta for later
         }
         this.resultedPoints.push(result);
         return result;
     };
 
-    buffer.copyPoint = function( p, n ) {
-	if( n && !this.copies[this.used]++ ) {
+    buffer.copyPoint = function( p, n, bc, i, t, td ) {
+
+	if( n && !this.copies[p]++ ) {
 	        this.normal[p*3 + 0] = n[0];
         	this.normal[p*3 + 1] = n[1];
 	        this.normal[p*3 + 2] = n[2];		
+
+		this.simplex[p*3+0] = bc[0];
+		this.simplex[p*3+1] = bc[1];
+		this.simplex[p*3+2] = bc[2];
+
+		this.types1[p*3+0] = t[0];//this.type1[p];
+		this.types1[p*3+1] = t[1];//this.type2[p];
+		this.types1[p*3+2] = t[2];//this.type1[p];
+		this.types2[p*3+0] = t[3];//this.type1[p];
+		this.types2[p*3+1] = t[4];//this.type1[p];
+		this.types2[p*3+2] = t[5];//this.type1[p];
+		this.typeDelta[p*3+0] = td[0];//this.typeDelta[p];
+		this.typeDelta[p*3+1] = td[1];//this.typeDelta[p];
+		this.typeDelta[p*3+2] = td[2];//this.typeDelta[p];
+
+		return p; // first 'copy' doesn't need to be copied.
+	}
+	if( bc && !this.copies[p]++ ) {
+	
+		this.simplex[p*3+0] = bc[0];
+		this.simplex[p*3+1] = bc[1];
+		this.simplex[p*3+2] = bc[2];
+	
+		this.types1[p*3+0] = t[0];//this.type1[p];
+		this.types1[p*3+1] = t[1];//this.type2[p];
+		this.types1[p*3+2] = t[2];//this.type1[p];
+		this.types2[p*3+3] = t[3];//this.type1[p];
+		this.types2[p*3+4] = t[4];//this.type1[p];
+		this.types2[p*3+5] = t[5];//this.type1[p];
+		//console.log( "First copy; set deltas:", td );
+		this.typeDelta[p*3+0] = td[0];//this.typeDelta[p];
+		this.typeDelta[p*3+1] = td[1];//this.typeDelta[p];
+		this.typeDelta[p*3+2] = td[2];//this.typeDelta[p];
 		return p; // first 'copy' doesn't need to be copied.
 	}
         if( this.used >= this.available )
@@ -189,6 +237,23 @@ function GeometryBuffer() {
         this.normal[u3 + 2] = this.normal[p*3 + 2];
        }
 
+	if( bc ) {
+		this.simplex[u3+0] = bc[0];
+		this.simplex[u3+1] = bc[1];
+		this.simplex[u3+2] = bc[2];
+	
+
+		this.types1[u3+0] = t[0];//this.type1[p];
+		this.types1[u3+1] = t[1];//this.type2[p];
+		this.types1[u3+2] = t[2];//this.type2[p];
+		this.types2[u3+0] = t[3];//this.type2[p];
+		this.types2[u3+1] = t[4];//this.type2[p];
+		this.types2[u3+2] = t[5];//this.type2[p];
+		//console.log( "2+ copy Setting type deltas:", td );
+		this.typeDelta[u3+0] = td[0];//this.typeDelta[p];
+		this.typeDelta[u3+1] = td[1];//this.typeDelta[p];
+		this.typeDelta[u3+2] = td[2];//this.typeDelta[p];
+	}
        this.in_Pow[ this.used ]            = this.in_Pow[ p ]           ;
        this.in_use_texture[ this.used ]    = this.in_use_texture[ p ]   ;
        this.in_flat_color[this.used]       = this.in_flat_color[p]      ;
@@ -200,15 +265,19 @@ function GeometryBuffer() {
        return this.used++;
    };
 
+	// barycentric coordinate anchors.
+	const face_i = [1,0,0];
+	const face_j = [0,1,0];
+	const face_k = [0,0,1];
 
-    buffer.addFace = function( a,b,c, n){
+    buffer.addFace = function( a,b,c, n, i, types, deltaTypes ){
         while( (this.usedFaces+3) >= this.availableFaces )
             this.expandFaces();
-        if(n) {
-            a = this.copyPoint( a, n );
-            b = this.copyPoint( b, n );
-            c = this.copyPoint( c, n );
-        }
+
+            a = this.copyPoint( a, n, face_i, i, types, deltaTypes );
+            b = this.copyPoint( b, n, face_j, i, types, deltaTypes );
+            c = this.copyPoint( c, n, face_k, i, types, deltaTypes );
+
         this.in_face_index[this.usedFaces++] = a;
         this.in_face_index[this.usedFaces++] = b;
         this.in_face_index[this.usedFaces++] = c;

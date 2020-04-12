@@ -50,6 +50,16 @@ function GeometryMaterial() {
     attribute  float in_flat_color;
     attribute  float in_decal_texture;
 
+	attribute vec3 types1;
+	attribute vec3 types2;
+	attribute vec3 typeDelta;
+	attribute vec3 simplex;
+
+	flat out vec3 v_types1;
+	flat out vec3 v_types2;
+	out vec3 v_typeDelta; 
+	out vec3 v_simplex;
+	
     uniform vec3 pointCursor_1; // this will probably be an array someday.
 
     attribute  vec3 in_Modulous;
@@ -66,8 +76,11 @@ function GeometryMaterial() {
     varying float ex_flat_color;
     varying float ex_decal_texture;
     varying vec4 ex_FaceColor;
+
+
     varying vec3 zzNormal;
     varying vec3 zzPos;
+    varying vec4 zPosition;
     #define EPSILON 1e-6
 
     varying  vec3 ex_Modulous;
@@ -114,7 +127,12 @@ function GeometryMaterial() {
                 ex_flat_color = in_flat_color;
                 ex_Modulous = in_Modulous*3.0;
         }
+	v_types1 = types1;
+	v_types2 = types2;
+	v_simplex = simplex;
+	v_typeDelta = typeDelta;//*simplex;
 	zzPos = position;
+	zPosition = gl_Position;
         zzNormal = normalize(normal);
     }
     `,
@@ -126,6 +144,7 @@ fragmentShader:`
     uniform float opacity;
     varying vec3 zzNormal;
     varying vec3 zzPos;
+    varying vec4 zPosition;
 
 //#define NUM_DIR_LIGHTS 3
     #ifndef FLAT_SHADED
@@ -168,6 +187,12 @@ fragmentShader:`
     
     uniform float logDepthBufFC;
     varying float vFragDepth;
+	flat in vec3 v_types1;
+	flat in vec3 v_types2;
+	
+	in vec3 v_typeDelta;
+	in vec3 v_simplex;
+	//in vec3 v_curDelta;
 
     void main() {
         vec2 vUv;
@@ -187,91 +212,148 @@ fragmentShader:`
         #include <emissivemap_fragment>
 
 	vec3 modulo = ex_Modulous/30.0 + 1.3;
+
+	vec3 curDeltas;
+	curDeltas = 1.0 - v_typeDelta * v_simplex;
+
+	// 0 becomes 1.0 as an output.. -1 cos is biased to 0 for a range of 0->1 from -1->1
+	curDeltas = cos( curDeltas * 2.0*3.14159 )/2.0 + 0.5;
+
         //if(2.0 > 1.0)
         {
+                   vec4 face = ex_FaceColor;
+		vec4 edge = ex_Color;
+                   vec4 white;
                 if( 1.0 > 0.0 || ex_use_texture > 0.5 )
                 {
-//			float texLayer = 
+			float fadeFrom;
+			float fadeTo;
+			float fadeBy;
+			float tmp;
 
-			float yMin = (modulo.y) / 1.0  - 1.0/18.0 / 1.0;
-			float yMax = (modulo.y) / 1.0  + (1.0/18.0 / 1.0);
+		tmp = v_types1.y;
+		if( tmp == 0.0 ) 
+			edge.rgb = vec3( 0.5, 0.0, 0.0 );
+		else if( tmp == 1.0 ) 
+			edge.rgb = vec3( 0.0, 0.5, 0.0 );
+		else if( tmp == 2.0 ) 
+			edge.rgb = vec3( 0.0, 0.0, 5.0 );
+		else if( tmp == 3.0 ) 
+			edge.rgb = vec3( 0.5, 0.0, 0.5 );
+		else if( tmp == 4.0 ) 
+			edge.rgb = vec3( 0.5, 0.5, 0.0 );
+		else if( tmp == 5.0 ) 
+			edge.rgb = vec3( 0.0, 0.5, 5.0 );
 
-			vec4 cxy_t = texture( textureMap3, vec3(modulo.xy,modulo.y) );
 
-			vec4 cxy1 = texture( textureMap3, vec3(modulo.xy,yMin) );
-			vec4 cyz1 = texture( textureMap3, vec3(modulo.yz,yMin) );
-			vec4 cxz1 = texture( textureMap3, vec3(modulo.xz,yMin) );
+			float index = v_types1.x/6.0+0.08;
+#define TEXTURE_SCALAR 8.0
+			vec4 cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+			vec4 cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+			vec4 cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+			vec4 cxyz1 = (cxy1 * abs(zzNormal.z)) + (cyz1 * abs(zzNormal.x)) + (cxz1 * abs(zzNormal.y));
+			cxyz1 = sqrt((cxyz1*cxyz1)/3.0);
 
-			vec4 cxy2 = texture( textureMap3, vec3(modulo.xy,yMax) );
-			vec4 cyz2 = texture( textureMap3, vec3(modulo.yz,yMax) );
-			vec4 cxz2 = texture( textureMap3, vec3(modulo.xz,yMax) );
+			index = v_types1.y/6.0+0.08;
+			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+			vec4 cxyz2 = (cxy1 * abs(zzNormal.z)) + (cyz1 * abs(zzNormal.x)) + (cxz1 * abs(zzNormal.y));
+			cxyz2 = sqrt((cxyz2*cxyz2)/3.0);
 			
-			float sclr = cos( (0.25+mod(modulo.y*6.0,1.0)) * 2.0*3.14159 )/2.0+0.5;
+			cxyz1 = cxyz1 * curDeltas.x + cxyz2 * (1.0-curDeltas.x);
 
-			vec4 cxy = vec4( (cxy1.rgb * sclr) + (cxy2.rgb * (1.0- sclr)), 1.0 );
-			vec4 cyz = vec4( (cyz1.rgb * sclr) + (cyz2.rgb * (1.0- sclr)), 1.0 );
-			vec4 cxz = vec4( (cxz1.rgb * sclr) + (cxz2.rgb * (1.0- sclr)), 1.0 );
+			index = v_types1.z/6.0+0.08;
+			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+			vec4 cxyz3 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
+			cxyz3 = sqrt((cxyz3*cxyz3)/3.0);
 
-			vec3 tot = (cxy.rgb * abs(zzNormal.z)) + (cyz.rgb * abs(zzNormal.x)) + (cxz.rgb * abs(zzNormal.y));
-			tot = ( tot * tot ) / 3.0;
-			tot = sqrt(tot);//vec3( sqrt(tot.x), sqrt(tot.y),sqrt(tot.z));
+			index = v_types2.x/6.0+0.08;
+			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+			vec4 cxyz4 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
+			cxyz4 = sqrt((cxyz4*cxyz4)/3.0);
 
-                      diffuseColor =  vec4( tot
-				, (cxy.a * abs(zzNormal.z)) + (cyz.a * abs(zzNormal.x)) + (cxz.a * abs(zzNormal.y)) );
+			cxyz2 = cxyz3 * curDeltas.y + cxyz4 * (1.0-curDeltas.y);
 
-//                      diffuseColor =  (cxy * abs(zzNormal.z)) + (cyz * abs(zzNormal.x)) + (cxz * abs(zzNormal.y));
-                    
-                     // diffuseColor =  vec4( vec3( abs(zzNormal.x),abs(zzNormal.y),abs(zzNormal.z) ), 1.0 ) ;
+			// -- compute third point delta between it's types..
+			index = v_types2.y/6.0+0.08;
+			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+			vec4 cxyz5 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
+			cxyz5 = sqrt((cxyz5*cxyz5)/3.0);
 
-                    //if( edge_only > 0.5 )
-                    //    diffuseColor = vec4(1.0);
-                    //else
-                    //    diffuseColor = vec4( texture2D( map, ex_texCoord ).rgb, 1.0 );
-                      //  diffuseColor = vec4( ex_texCoord, texture2D( map, ex_texCoord ).r, 1.0 );
-                    //diffuseColor =vec4(ex_texCoord.x,ex_texCoord.y,0,1);// ex_Color;
+			index = v_types2.z/6.0+0.08;
+			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+			vec4 cxyz6 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
+			cxyz6 = sqrt((cxyz6*cxyz6)/3.0);
+
+			cxyz3 = cxyz5 * curDeltas.z + cxyz6 * (1.0-curDeltas.z);
+
+			// this double applies simplex... 
+			cxyz1 = cxyz1 * v_simplex.x + cxyz2 * v_simplex.y + cxyz3 * v_simplex.z;
+			face = cxyz1;
+	face.a = 1.0;
+
+//	face.rgb = v_simplex;
+
+		gl_FragColor =face;
+	//	gl_FragColor.rgb = curDeltas;
+//		gl_FragColor = cxyz1;
+//		gl_FragColor.a = 1.0;
+
+//gl_FragColor.r = (curDeltas.x + curDeltas.y + curDeltas.z)/2.0;
+//gl_FragColor.g = (v_typeDelta.x+ v_typeDelta.y+v_typeDelta.z)/3.0;
+//gl_FragColor.b = gl_FragColor.r;
+
+//gl_FragColor.rgb = v_typeDelta;
+//gl_FragColor.rgb = face.rgb;
+
+//	return;
+
+
+			//face.g += v_simplex.g/4.0;
+			//face.b += v_simplex.b/4.0;
+			//face.rgb = v_typeDelta/2.0;	
                 }
-                else if( ex_flat_color > 0.5 )
+                //else if( ex_flat_color > 0.5 )
+                //{
+                //    diffuseColor =vec4(1,0,1,1);// edge;
+                //}
+                //else
                 {
-                    diffuseColor =vec4(1,0,1,1);// ex_Color;
-                }
-                else
-                {
-                    float a = mod(ex_Modulous.x +0.5, 1.0 )-0.5;
-                    float b = mod(ex_Modulous.y +0.5, 1.0 )-0.5;
-                    float c = mod(ex_Modulous.z +0.5, 1.0 )-0.5;
+			vec3 gridmod = mod( ex_Modulous+0.5, 1.0 ) - 0.5;
 
                     float g;
                     float h;
-                    vec3 white;
-                    a = 4.0*(0.25-a*a);
-                    b = 4.0*(0.25-b*b);
-                    c = 4.0*(0.25-c*c);
-                    a = pow( abs(a), ex_Pow );
-                    b = pow( abs(b), ex_Pow );
-                    c = pow( abs(c), ex_Pow );
+			gridmod = 4.0 * ( 0.25 - gridmod*gridmod);
 
-                 //g = pow( ( max(a,b)),in_Pow);
-                    //h = pow( ( a*b),in_Pow/4);
-                    g = min(1.0,c+b+a);
-                    h = max((c+b+a)-1.5,0.0)/3.0;
-                    white = vec3(1.0,1.0,1.0) * max(ex_Color.r,max(ex_Color.g,ex_Color.b));
-                    //	diffuseColor = vec4( h * white + (g * ex_Color.rgb), ex_Color.a ) ;
-                    //  diffuseColor = vec4( g * ex_Color.rgb, ex_Color.a ) ;
-                    if( edge_only > 0.5 )
-                         diffuseColor = vec4( h* ( white - ex_FaceColor.rgb )+ (g* ex_Color.rgb), (g * ex_Color.a) ) ;
-                    else
-                         diffuseColor = vec4( ex_FaceColor.a*(1.0-g)*ex_FaceColor.rgb + h* ( white - ex_FaceColor.rgb ) + (g* ex_Color.rgb), (1.0-g)*ex_FaceColor.a + (g * ex_Color.a) ) ;
-                    //diffuseColor = vec4( (1.0-g)*ex_FaceColor.rgb + h* ( white - ex_FaceColor.rgb )+ (g* ex_Color.rgb), (1.0-g)*ex_FaceColor.a + (g * ex_Color.a) ) ;
-                    //diffuseColor = vec4(g,h,1,1);
-                    //diffuseColor = ex_Color;
-                    //gl_FragColor =vec4( a,b,c, ex_Color.a ) ;
-                }
-            }
+                    float depthScalar;
+
+                    depthScalar = 1.0/(zPosition.z+50.0)*50.0;
+                    depthScalar = depthScalar*depthScalar*depthScalar*depthScalar;
+
+			gridmod.x = pow( abs( gridmod.x ), ((7.0*depthScalar))*ex_Pow );
+			gridmod.y = pow( abs( gridmod.y ), ((7.0*depthScalar))*ex_Pow );
+			gridmod.z = pow( abs( gridmod.z ), ((7.0*depthScalar))*ex_Pow );
+
+                    //g = pow( ( max(a,b)),in_Pow);
+                    //h = pow( ( a*b),in_Pow/4.0);
+                    g = min(1.0,gridmod.x+gridmod.y+gridmod.z);
+                    h = max((gridmod.x+gridmod.y+gridmod.z)-1.5,0.0)/3.0;
+                    //white = vec3(1.0,1.0,1.0) * max(edge.r,max(edge.g,edge.b));
 
 
       	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
         vec3 totalEmissiveRadiance = emissive;
 
+	diffuseColor = face;
         // accumulation
         #include <lights_phong_fragment>
         #include <lights_fragment_begin>
@@ -294,6 +376,18 @@ fragmentShader:`
     	#include <fog_fragment>
     	#include <premultiplied_alpha_fragment>
     	#include <dithering_fragment>
+
+		// update to include grid computation (no shine on virtual lines)
+		if( 1.0 > 0.0 )
+
+                    if( edge_only > 0.5 )
+                         gl_FragColor += vec4( h* ( white.rgb - gl_FragColor.rgb )+ (g* edge.rgb), (g * edge.a) ) ;
+                    else
+                         gl_FragColor += 0.1 * vec4( gl_FragColor.a*(1.0-g)*gl_FragColor.rgb + h* ( white.rgb - gl_FragColor.rgb ) + (g* edge.rgb), (1.0-g)*gl_FragColor.a + (g * edge.a) ) ;
+                }
+            }
+
+	//gl_FragColor.r = float(v_type1)/6.0;
 
     }
     `
