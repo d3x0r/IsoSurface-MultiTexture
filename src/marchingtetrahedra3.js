@@ -170,8 +170,11 @@ var MarchingTetrahedra3 = (function() {
 				[[1,0,2]],    // vert 0
 				[[1,0,4],[4,0,5]],
 				[[3,0,4],[4,0,2]],
+//				[[4,1,0],[4,0,5]],
+//				[[4,3,0],[4,0,2]],
 				[[5,0,3]],    // vert 1
 				[[2,1,5],[5,1,3]],
+//				[[5,2,1],[5,1,3]],
 				[[3,1,4]],    // vert 2
 				[[4,2,5]]     // vert 3
 			]
@@ -183,7 +186,7 @@ var MarchingTetrahedra3 = (function() {
 //  static data in the function context; instance data for this function.
 	return function(data,dims, opts) {
 
-
+	const elements = opts.elements;
 	var vertices = opts.vertices || []
 	, faces = opts.faces || [];
 	var smoothShade = opts.smoothShade || false;
@@ -312,6 +315,9 @@ function meshOne(data, dims) {
 				const baseOffset = x+0 + y*dim0 + z * dim0*dim1;
 				const lineArray = linesMin[odd];
 				bits[x+y*dim0] = 0;
+			//if( x < 4 || x > 5 ) continue;
+			//if( y < 6 || y > 6 ) continue;
+			//if( z < 5 ) continue;
 
 				for( let l = 0; l < 9; l++ ) {
 					const p0 = lineArray[l][0];
@@ -389,6 +395,7 @@ function meshOne(data, dims) {
 									 , false // flat
 									 , false // decal texture?
 									 , pointOutputHolder  // modulous of this point.
+									 , data0*10+elements.data[data0], data1*10+elements.data[data1], t, false
 								);
 								points[baseHere+l] = normal.id;
 							}
@@ -414,6 +421,7 @@ function meshOne(data, dims) {
 									 , false // flat
 									 , false // decal texture?
 									 , pointOutputHolder  // modulous of this point.
+									 , data1*10+elements.data[data1], data0*10+elements.data[data0], t, true
 								);
 								points[baseHere+l] = normal.id;
 							}
@@ -475,20 +483,23 @@ function meshOne(data, dims) {
 						//console.log( `Output: odd:${odd} tet:${tet} x:${x} y:${y} a:${JSON.stringify(a)}` );
 						if( crosses[ baseOffset+edgeToComp[odd][tet][1] ] ) {
 							if( crosses[ baseOffset+edgeToComp[odd][tet][2] ] ) {
+								// lower left tet. // source point is 0
 								useFace = 1;
 								invert = ( data[dataOffset+vertToData[odd][tet][0]] >= 0 )?1:0;
-
 							} else {
 								if( crosses[ baseOffset+edgeToComp[odd][tet][4] ] && crosses[ baseOffset+edgeToComp[odd][tet][5] ]) {
+									// source point is 2? 1?   (0?3?)
 									useFace = 2;
 									invert = ( data[dataOffset+vertToData[odd][tet][0]] >= 0 )?1:0 ;
 								}
 							}
 						} else {
 							if( crosses[ baseOffset+edgeToComp[odd][tet][2]] && crosses[ baseOffset+edgeToComp[odd][tet][3]] && crosses[ baseOffset+edgeToComp[odd][tet][4] ] ) {
+								// source point is ? 1? 3?   (0? 2?)
 								useFace = 3;
 								invert = ( data[dataOffset+vertToData[odd][tet][0]] >= 0 )?1:0  ;
 							}else if( crosses[ baseOffset+edgeToComp[odd][tet][3]] && crosses[ baseOffset+edgeToComp[odd][tet][5] ] ) {
+								// source point is 1
 								useFace = 4;
 								invert = ( data[dataOffset+vertToData[odd][tet][1]] >= 0 )?1:0
 							}
@@ -496,20 +507,24 @@ function meshOne(data, dims) {
 					} else {
 						if( crosses[ baseOffset+edgeToComp[odd][tet][1] ] ) {
 							if( crosses[ baseOffset+edgeToComp[odd][tet][2] ] && crosses[ baseOffset+edgeToComp[odd][tet][3] ] && crosses[ baseOffset+edgeToComp[odd][tet][5] ]) {
+								// 0?1?   2?3?
 								useFace = 5;
 								invert = ( data[dataOffset+vertToData[odd][tet][0]] >= 0 )  ?1:0
 							} else if( crosses[ baseOffset+edgeToComp[odd][tet][3]] && crosses[ baseOffset+edgeToComp[odd][tet][4] ] ) {
+								// source point is 2
 								useFace = 6;
 								invert = ( data[dataOffset+vertToData[odd][tet][2]] >= 0 ) ?1:0
 							}
 						} else {
 							if( crosses[ baseOffset+edgeToComp[odd][tet][2] ] && crosses[ baseOffset+edgeToComp[odd][tet][4]] && crosses[ baseOffset+edgeToComp[odd][tet][5] ] ) {
+								// source point is 3
 								useFace = 7;
 								invert = ( data[dataOffset+vertToData[odd][tet][3]] >= 0 ) ?1:0
 							} else {
 							}
 						}
 					}
+					if( useFace <1 ) continue;
 					if( useFace-- ) {
 						const fpi = facePointIndexes[odd][tet][invert][useFace];
 						for( var tri=0;tri< fpi.length; tri++ ){
@@ -611,7 +626,15 @@ function meshOne(data, dims) {
 									if( debug_ && normals[ci].adds >= 3 &&  !normals[ci].normalBuffer[0] && !normals[ci].normalBuffer[1] && !normals[ci].normalBuffer[2] ){ console.log( "zero normal:", ci, normals[ci], normals[ci].normalBuffer, normals[ci].vertBuffer );}//debugger;
 									if( debug_ && normals[bi].adds >= 3 &&  !normals[bi].normalBuffer[0] && !normals[bi].normalBuffer[1] && !normals[bi].normalBuffer[2] ){ console.log( "zero normal:", ci, normals[ci], normals[ci].normalBuffer, normals[ci].vertBuffer );}//debugger;
 									if( debug_ && normals[ai].adds >= 3 &&  !normals[ai].normalBuffer[0] && !normals[ai].normalBuffer[1] && !normals[ai].normalBuffer[2] ){ console.log( "zero normal:", ci, normals[ci], normals[ci].normalBuffer, normals[ci].vertBuffer );}//debugger;
-									opts.geometryHelper.addFace( points[ai], points[bi], points[ci] );
+
+
+									//console.log( "vertices", tet, useFace, tri, "pos:", x, y, z, "dels:", normals[ai].typeDelta, normals[bi].typeDelta, normals[ci].typeDelta, "a:", normals[ai].invert, normals[ai].type1, normals[ai].type2, "b:", normals[bi].invert, normals[bi].type1, normals[bi].type2, "c:", normals[ci].invert, normals[ci].type1, normals[ci].type2 );
+
+									opts.geometryHelper.addFace( points[ai], points[bi], points[ci], null
+										, invert
+										, [normals[ai].type1%10, normals[ai].type2%10, normals[bi].type1%10, normals[bi].type2%10, normals[ci].type1%10, normals[ci].type2%10 ]
+										, [normals[ai].typeDelta, normals[bi].typeDelta, normals[ci].typeDelta] );
+									
 									//opts.geometryHelper.addFace( normals[ai].id, normals[bi].id, normals[ci].id );
 
 								}else{
@@ -704,7 +727,9 @@ function meshOne(data, dims) {
 									fnorm[0] *= ds;fnorm[1] *= ds;fnorm[2] *= ds;
 
 									opts.geometryHelper.addFace( points[ai], points[bi], points[ci]
-												, fnorm );
+												, fnorm, invert
+										, [normals[ai].type1%10, normals[ai].type2%10, normals[bi].type1%10, normals[bi].type2%10, normals[ci].type1%10, normals[ci].type2%10 ]
+										, [normals[ai].typeDelta, normals[bi].typeDelta, normals[ci].typeDelta]  );
 								}else {
 									const vA = vertices[points[ai]];
 									const vB = vertices[points[bi]];
