@@ -6,6 +6,8 @@ const Textures = [
         , root+"texture-layer-4.png"
         , root+"texture-layer-5.png"
         , root+"texture-layer-6.png"
+        , root+"CursorIcon.png"
+
 ]
 
 const whenDone = [];

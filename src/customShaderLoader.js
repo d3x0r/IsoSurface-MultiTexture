@@ -9,14 +9,25 @@ import {GeometryMaterial} from "./geometrymaterial.texture.js"
 import "./TrackballControls.js"
 
 const common = {
-	stack : null
+	stack : null,
+	cursorIcon : null
 }
 
 TextureDone( ()=>{
 	common.stack = TextureStack();
 	window.Textures = Textures;
 	window.ttCommon = common;
-	for( let texture of Textures ) common.stack.add( texture );
+	for( let image of Textures ) {
+		console.log("?", image.width );
+		if( image.width < 512 ) {
+                        var texture = new THREE.Texture(image)
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
+			texture.needsUpdate = true;
+			common.cursorIcon = texture;
+		}else 
+			common.stack.add( image );
+	}
 	window.doInit();
 })
 

@@ -18,7 +18,12 @@ function GeometryMaterial() {
             emissive : {value: new THREE.Color(0,0,0 )},
             diffuse : {value: new THREE.Color(0x909090 )},
             shininess : {value: 40},
-            ambientLightColor : {value:new THREE.Color(0x404040)}
+            ambientLightColor : {value:new THREE.Color(0x404040)},
+	    cursorIconTex      : { type:"t", value:null },
+	    cursorRayNormal    : { value : new THREE.Vector3( 0, 0, 0 ) },
+            cursorRayOrigin    : { value : new THREE.Vector3( 0, 0, 0 ) },
+            cursorIconNormal   : { value : new THREE.Vector3( 0, 0, 0 ) },
+            cursorIconUp       : { value : new THREE.Vector3( 0, 0, 0 ) }
         }
     ] ),
     // lights:true,  (soon!)
@@ -81,6 +86,7 @@ function GeometryMaterial() {
 
 
     varying vec3 zzNormal;
+    varying vec3 zrNormal;
     varying vec3 zzPos;
     varying vec4 zPosition;
 	varying vec3 curDeltas;
@@ -150,6 +156,13 @@ fragmentShader:`
     varying vec3 zzPos;
     varying vec4 zPosition;
 
+	uniform sampler2D cursorIconTex;
+	uniform vec3 cursorRayNormal;
+	uniform vec3 cursorRayOrigin;
+	//uniform vec3 cursorIconNormal;
+	uniform vec3 cursorIconUp;
+
+
 //#define NUM_DIR_LIGHTS 3
     #ifndef FLAT_SHADED
 
@@ -198,6 +211,32 @@ fragmentShader:`
 	in vec3 v_typeDelta;
 	in vec3 v_simplex;
 	//in vec3 v_curDelta;
+
+
+void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
+					 vec3 n, vec3 o,  // plane n, o
+					inout vec2 r ) {
+		float a,b,c,cosPhi, t; // time of intersection
+		a = ( Slope.x * n.x + Slope.y * n.y + Slope.z * n.z );
+		r.x = 0.0; r.y = 0.0;
+	        
+		if( a == 0.0 ) { return; }
+	        
+		b = length( Slope );
+		c = length( n );
+		if( b == 0.0 || c == 0.0 ) { r.y = 1.0; return; } // bad vector choice - if near zero length...
+	        
+		cosPhi = a / ( b * c );
+		t = ( n.x * ( o.x - Origin.x ) + n.y * ( o.y - Origin.y ) + n.z * ( o.z - Origin.z ) ) / a;
+	        
+		if( cosPhi > 0.0 || cosPhi < 0.0 ) // at least some degree of insident angle
+		{
+			r.x = cosPhi; r.y = t;
+		}else {
+			{ r.y = 1.0; return; }
+		}
+	}
+
 
     void main() {
         vec2 vUv;
@@ -405,6 +444,40 @@ fragmentShader:`
 
 	//gl_FragColor.rgb += v_simplex/4.0;
 	//gl_FragColor.r = float(v_type1)/6.0;
+
+	{
+		// this can work in projected space. against 0 origin for camera.
+				vec2 mouseAngle;
+		IntersectLineWithPlane( cursorRayNormal, vec3(0.0), vNormal.xyz, zPosition.xyz, mouseAngle );
+//gl_FragColor.rgb = zPosition.xyz;
+//return;
+//	gl_FragColor.r = cursorRayNormal.x;zzzZZZ
+		vec3 mouse_on_this = cursorRayNormal * mouseAngle.y + vec3(0.0);
+
+		//if( distance( mouse_on_this, zPosition.xyz ) < 1.0 ) gl_FragColor.rgb = vec3(1.0,1.0,1.0);
+		// detected intersection on plane.
+
+		//vec2 planeUVAngle;
+		//IntersectLineWithPlane( zzNormal.xyz, zPosition.xyz, cursorRayNormal, vec3(0.0,0.0,0.0), planeUVAngle );
+		
+		vec3 linePoint                = -( mouse_on_this - zPosition.xyz  );
+		vec3 cursorIconRightProjector = normalize(cross( cursorIconUp, cursorRayNormal ));
+		vec3 cursorIconUpProjector = normalize(cross( cursorIconRightProjector, cursorRayNormal ));
+		float upProjection            = dot( cursorIconUpProjector, linePoint ) / 2.0 + 0.5;
+		float rightProjection         = dot( cursorIconRightProjector, linePoint ) / 2.0 + 0.5;
+		
+		//if( distance( mouse_on_this, zPosition.xyz ) < 1.414 ) 
+		{
+			//gl_FragColor.rgb = vec3(upProjection, rightProjection, 0.0);
+		
+			//cursorRayPosition
+			vec4 this_color = texture2D( cursorIconTex, vec2( rightProjection, upProjection ) );
+		        if( this_color.a > 0.0 ) {
+				gl_FragColor.rgb = ( gl_FragColor.rgb * (1.0-this_color.a)) + ( this_color.rgb * this_color.a );
+			}
+			//gl_FragColor.rgb = cursorIconUp;
+		}
+	}
 
     }
     `

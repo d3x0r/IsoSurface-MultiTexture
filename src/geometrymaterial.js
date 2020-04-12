@@ -26,7 +26,7 @@ function GeometryMaterial() {
      blending: THREE.NormalBlending,
 	vertexShader: `
 
-    // expected 'position' as an attribute.
+// expected 'position' as an attribute.
 // expected 'normal' as an attribute.
 
     #include <common>
