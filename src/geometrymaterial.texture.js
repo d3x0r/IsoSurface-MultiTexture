@@ -16,9 +16,9 @@ function GeometryMaterial() {
             //map : { type : "t", value : null },
             specular : {value : [0.02,0.02,0.02]},
             emissive : {value: new THREE.Color(0,0,0 )},
-            diffuse : {value: new THREE.Color(0xa0a0a0 )},
+            diffuse : {value: new THREE.Color(0x909090 )},
             shininess : {value: 40},
-            ambientLightColor : {value:new THREE.Color(0x303030)}
+            ambientLightColor : {value:new THREE.Color(0x404040)}
         }
     ] ),
     // lights:true,  (soon!)
@@ -137,7 +137,7 @@ function GeometryMaterial() {
 	curDeltas = typeDelta;// * simplex; // let opengl scale the whole thing... 
 	zzPos = position;
 	zPosition = gl_Position;
-        zzNormal = normalize(normal);
+        zzNormal = normalize( abs(normal) );
     }
     `,
 fragmentShader:`
@@ -241,7 +241,7 @@ fragmentShader:`
 
 		tmp = v_types1.y;
 		if( tmp == 0.0 ) 
-			edge.rgb = vec3( 0.5, 0.0, 0.0 );
+			edge.rgb = vec3( 0.0, 0.7, 0.7 );
 		else if( tmp == 1.0 ) 
 			edge.rgb = vec3( 0.0, 0.5, 0.0 );
 		else if( tmp == 2.0 ) 
@@ -252,32 +252,47 @@ fragmentShader:`
 			edge.rgb = vec3( 0.5, 0.5, 0.0 );
 		else if( tmp == 5.0 ) 
 			edge.rgb = vec3( 0.0, 0.5, 5.0 );
+		else if( tmp == 6.0 ) 
+			edge.rgb = vec3( 0.5, 0.5, 0.5 );
 
 
 			float index;
+
 #define TEXTURE_SCALAR 8.0
+#define NUMBER_OF_TEXTURE_TYPES 6.0
+// this is -0.08
+#define _3D_TEXTURE_LAYER_CONVERSION ( -(1.0/NUMBER_OF_TEXTURE_TYPES) / 2.0 ) 
+
+			// if type 1 isn't void; use type 1.
 			if( v_types1.x > 0.0 ) 
 				index = v_types1.x/6.0-0.08;
-			else
+			else // type 2 will not be void if 1 is void; use this.
 				index = v_types1.y/6.0-0.08;
-			
 
+			const vec4 vec_2 = vec4(2.0,2.0,2.0,2.0);
 
+			vec4 cxyz1, cxyz2, cxyz3; // texels at this point that are scaled by simplex
+			// compute spacial coordinate index (should add more layers here to auto rotate uv lookups based on fractional values of curDeltas.
 			vec4 cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 			vec4 cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 			vec4 cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-			vec4 cxyz1 = (cxy1 * abs(zzNormal.z)) + (cyz1 * abs(zzNormal.x)) + (cxz1 * abs(zzNormal.y));
-			vec4 cxyz2 = cxyz1 = sqrt((cxyz1*cxyz1)/3.0);					
+			// okay so let's figure this out; the normal is a unit vector, but the sum of each thing is not itself 1.
+			// but rather tus sum of the squares.
+#define MAGIC_FUNCTION sqrt(pow( pow(cxy1 * abs(zzNormal.z),vec_2) + pow(cyz1 * abs(zzNormal.x),vec_2) + pow(cxz1 * abs(zzNormal.y),vec_2), vec_2));
+			cxyz1 = MAGIC_FUNCTION;
+			if( v_types1.x == 1.0 ) cxyz1.a = 0.5; else cxyz1.a = 1.0;
 
 			if( v_types1.x > 0.0 && v_types1.y > 0.0 ) {
+				// if both are not void, then compute the other point, and the delta to the other texture
 				index = v_types1.y/6.0-0.08;
+				// this calculates the position in a 3-plane repetition space; scaled by the normal.
 				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 				cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-				vec4 cxyz2 = (cxy1 * abs(zzNormal.z)) + (cyz1 * abs(zzNormal.x)) + (cxz1 * abs(zzNormal.y));
-				cxyz2 = sqrt((cxyz2*cxyz2)/3.0);
-				
+				vec4 cxyz2 = MAGIC_FUNCTION;
+				// this is against a constant; current is the same everywhere.
 				cxyz1 = cxyz1 * curDeltas.x + cxyz2 * (1.0-curDeltas.x);
+				if( v_types1.y == 1.0 ) cxyz1.a = 0.5;
 			}
 			
 
@@ -289,21 +304,19 @@ fragmentShader:`
 			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-			cxyz2 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
-			cxyz2 = sqrt((cxyz2*cxyz2)/3.0);
+			cxyz2 = MAGIC_FUNCTION;
+			if( v_types1.z == 1.0 ) cxyz2.a = 0.5; else cxyz2.a = 1.0;
 
 			if( v_types1.z >0.0 && v_types2.x >0.0 ) {
 				index = v_types2.x/6.0-0.08;
 				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 				cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-				vec4 cxyz4 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
-				cxyz4 = sqrt((cxyz4*cxyz4)/3.0);
+				vec4 cxyz4 = MAGIC_FUNCTION;
 				cxyz2 = cxyz2 * curDeltas.y + cxyz4 * (1.0-curDeltas.y);
 			}
 
 			if( v_types2.y > 0.0 ) {
-				// -- compute third point delta between it's types..
 				index = v_types2.y/6.0-0.08 ;
 			} else {
 				index = v_types2.z/6.0 - 0.8;
@@ -311,44 +324,23 @@ fragmentShader:`
 			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-			vec4 cxyz3 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
-			cxyz3 = sqrt((cxyz3*cxyz3)/3.0);
+			cxyz3 = MAGIC_FUNCTION;
+			if( v_types2.y == 1.0 ) cxyz3.a = 0.5; else cxyz3.a = 1.0;
+			
 
 			if( v_types2.y > 0.0 && v_types2.z > 0.0 ) {
 				index = v_types2.z/6.0-0.08;
 				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 				cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-				vec4 cxyz6 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
-				cxyz6 = sqrt((cxyz6*cxyz6)/3.0);
+				vec4 cxyz6 = MAGIC_FUNCTION;
+				if( v_types2.z == 1.0 ) cxyz6.a = 0.5; else cxyz6.a = 1.0;
 				cxyz3 = cxyz3 * curDeltas.z + cxyz6 * (1.0-curDeltas.z);
 			}
-
-			// this double applies simplex... 
+			// compute the final composite color into cxzy2 using the barycentric simplex scalar. (always adds to 1)
 			cxyz1 = ( cxyz1 * v_simplex.x + cxyz2 * v_simplex.y + cxyz3 * v_simplex.z ) ;
-			face = sqrt((cxyz1*cxyz1)/3.0);
-	face.a = 1.0;
-
-//	face.rgb = v_simplex;
-
-		gl_FragColor =face;
-	//	gl_FragColor.rgb = curDeltas;
-//		gl_FragColor = cxyz1;
-//		gl_FragColor.a = 1.0;
-
-//gl_FragColor.r = (curDeltas.x + curDeltas.y + curDeltas.z)/2.0;
-//gl_FragColor.g = (v_typeDelta.x+ v_typeDelta.y+v_typeDelta.z)/3.0;
-//gl_FragColor.b = gl_FragColor.r;
-
-//gl_FragColor.rgb = v_typeDelta;
-//gl_FragColor.rgb = face.rgb;
-
-//	return;
-
-
-			//face.g += v_simplex.g/4.0;
-			//face.b += v_simplex.b/4.0;
-			//face.rgb = v_typeDelta/2.0;	
+			face = cxyz1;
+			face.a = 1.0;
                 }
                 //else if( ex_flat_color > 0.5 )
                 //{
@@ -364,6 +356,7 @@ fragmentShader:`
 
                     float depthScalar;
 
+			// depthScalar causes the grid lines to be 'thicker' in the distance...
                     depthScalar = 1.0/(zPosition.z+50.0)*50.0;
                     depthScalar = depthScalar*depthScalar*depthScalar*depthScalar;
 
@@ -371,8 +364,6 @@ fragmentShader:`
 			gridmod.y = pow( abs( gridmod.y ), ((7.0*depthScalar))*ex_Pow );
 			gridmod.z = pow( abs( gridmod.z ), ((7.0*depthScalar))*ex_Pow );
 
-                    //g = pow( ( max(a,b)),in_Pow);
-                    //h = pow( ( a*b),in_Pow/4.0);
                     g = min(1.0,gridmod.x+gridmod.y+gridmod.z);
                     h = max((gridmod.x+gridmod.y+gridmod.z)-1.5,0.0)/3.0;
                     //white = vec3(1.0,1.0,1.0) * max(edge.r,max(edge.g,edge.b));
@@ -395,9 +386,6 @@ fragmentShader:`
     	#include <envmap_fragment>
 
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
-        //vec3 yyNormal = vec3( (zzNormal.x+1.0)/2.0, (zzNormal.y+1.0)/2.0,(zzNormal.z+1.0)/2.0);
-        //yyNormal += 0.5;
-        //gl_FragColor = vec4( yyNormal, diffuseColor.a );
 
     	#include <tonemapping_fragment>
     	#include <encodings_fragment>
@@ -406,12 +394,12 @@ fragmentShader:`
     	#include <dithering_fragment>
 
 		// update to include grid computation (no shine on virtual lines)
-		if( 1.0 > 0.0 )
+		if( 0.0 > 0.0 )
 
                     if( edge_only > 0.5 )
                          gl_FragColor += vec4( h* ( white.rgb - gl_FragColor.rgb )+ (g* edge.rgb), (g * edge.a) ) ;
                     else
-                         gl_FragColor += 0.1 * vec4( gl_FragColor.a*(1.0-g)*gl_FragColor.rgb + h* ( white.rgb - gl_FragColor.rgb ) + (g* edge.rgb), (1.0-g)*gl_FragColor.a + (g * edge.a) ) ;
+                         gl_FragColor += vec4( gl_FragColor.a*(1.0-g)*gl_FragColor.rgb + h* ( white.rgb - gl_FragColor.rgb ) + (g* edge.rgb), (1.0-g)*gl_FragColor.a + (g * edge.a) ) ;
                 }
             }
 

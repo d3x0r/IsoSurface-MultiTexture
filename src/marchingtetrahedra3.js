@@ -549,7 +549,7 @@ function meshOne(data, dims) {
 									   && ( vA[1] === vB[1] && vA[1] === vC[1] )
 									   && ( vA[2] === vB[2] && vA[2] === vC[2] ) ) {
 									   //console.log( "zero size tri-face")
-									   continue;
+									   //continue;
 									}
 									//if( !vA || !vB || !vC ) debugger;
 									fnorm[0] = vC[0]-vB[0];fnorm[1] = vC[1]-vB[1];fnorm[2] = vC[2]-vB[2];
@@ -714,7 +714,7 @@ function meshOne(data, dims) {
 									fnorm[1]=fnorm[2]*tmp[0] - a       *tmp[2];
 									fnorm[2]=a       *tmp[1] - b       *tmp[0];
 									let ds;
-									if( (ds=fnorm[0]*fnorm[0]+fnorm[1]*fnorm[1]+fnorm[2]*fnorm[2]) < 0.01 ){
+									if( (ds=fnorm[0]*fnorm[0]+fnorm[1]*fnorm[1]+fnorm[2]*fnorm[2]) < 0.00001 ){
 										fnorm[0] = vB[0]-vA[0];fnorm[1] = vB[1]-vA[1];fnorm[2] = vB[2]-vA[2];
 										tmp[0] = vC[0]-vA[0];tmp[1] = vC[1]-vA[1];tmp[2] = vC[2]-vA[2];
 										let a=fnorm[0], b = fnorm[1];
