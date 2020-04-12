@@ -73,6 +73,7 @@
 		};
 		var testdata = {};
 		var testelements = {};
+		var material	= null;
 
 		function updateMesh() {
 
@@ -292,16 +293,18 @@
 	  geometry.computeBoundingBox();
 	  geometry.computeBoundingSphere();
 	if( document.getElementById( "showNormal" ).checked && !document.getElementById("showGrid").checked ) {
-			let material	= new THREE.MeshNormalMaterial();
+			material	= new THREE.MeshNormalMaterial();
 			surfacemesh	= new THREE.Mesh( geometry, material );
 			surfacemesh.doubleSided = true;
 		}
 		else {
-			let material;
 			if( document.getElementById("showGrid").checked )
 			{
 				material	= THREE.GridGeometryMaterial();
 				material.uniforms.textureMap3.value = window.ttCommon.stack.smudge();
+				material.uniforms.cursorIconTex.value = window.ttCommon.cursorIcon;
+
+          			material.uniforms.cursorIconUp.value.set( 0, 0, 1 ); // this should update to the camera up 
 
 				surfacemesh	= new THREE.Mesh( geometry, material );
 				//cluster.THREE_solid.add( sector.THREE_solid = new THREE.Mesh( sector.solid_geometry.geometry, geometryShader ) );
@@ -354,6 +357,20 @@
 					context : undefined,
 				});
 			}
+
+				canvas.addEventListener( "mousemove", (evt)=>{
+					var pRect = canvas.getBoundingClientRect();
+					var x = evt.clientX - pRect.left;
+					var y = evt.clientY - pRect.top;
+					var x = ( (evt.x - pRect.left) / pRect.width ) * 2.0 - 1.0;
+					var y = ( (evt.y - pRect.top) / pRect.height ) * 2.0 - 1.0;
+					x = -x;
+					y = y;
+					    material.uniforms.cursorRayNormal.value.set( x, y, -0.92 );
+				            
+
+
+				} );
 
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.getElementById('container').appendChild(canvas);
@@ -530,6 +547,11 @@
 
 			// update camera controls
 			cameraControls.update();
+
+          			material.uniforms.cursorIconUp.value.copy( camera.up ); // this should update to the camera up 
+          			material.uniforms.cursorRayOrigin.value.copy( camera.position ); // this should update to the camera up 
+
+
 
 	  surfacemesh.visible = document.getElementById("showfacets").checked;
 	  wiremesh.visible = document.getElementById("showedges").checked;
