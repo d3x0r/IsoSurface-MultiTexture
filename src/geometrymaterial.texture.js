@@ -55,8 +55,10 @@ function GeometryMaterial() {
 	attribute vec3 typeDelta;
 	attribute vec3 simplex;
 
-	flat out vec3 v_types1;
-	flat out vec3 v_types2;
+	out vec3 v_types1;
+	out vec3 v_types2;
+	invariant  v_types1;
+	invariant  v_types2;
 	out vec3 v_typeDelta; 
 	out vec3 v_simplex;
 	
@@ -81,6 +83,7 @@ function GeometryMaterial() {
     varying vec3 zzNormal;
     varying vec3 zzPos;
     varying vec4 zPosition;
+	varying vec3 curDeltas;
     #define EPSILON 1e-6
 
     varying  vec3 ex_Modulous;
@@ -131,6 +134,7 @@ function GeometryMaterial() {
 	v_types2 = types2;
 	v_simplex = simplex;
 	v_typeDelta = typeDelta;//*simplex;
+	curDeltas = typeDelta;// * simplex; // let opengl scale the whole thing... 
 	zzPos = position;
 	zPosition = gl_Position;
         zzNormal = normalize(normal);
@@ -184,11 +188,12 @@ fragmentShader:`
     varying vec4 ex_FaceColor;
     //uniform sampler2D tex;
     uniform float edge_only;
+	varying vec3 curDeltas;
     
     uniform float logDepthBufFC;
     varying float vFragDepth;
-	flat in vec3 v_types1;
-	flat in vec3 v_types2;
+	 in vec3 v_types1;
+	 in vec3 v_types2;
 	
 	in vec3 v_typeDelta;
 	in vec3 v_simplex;
@@ -213,11 +218,14 @@ fragmentShader:`
 
 	vec3 modulo = ex_Modulous/30.0 + 1.3;
 
-	vec3 curDeltas;
-	curDeltas = 1.0 - v_typeDelta * v_simplex;
+	//vec3 curDeltas;
+	//curDeltas = 1.0 - v_typeDelta;
+
+	// so this is the same result...
 
 	// 0 becomes 1.0 as an output.. -1 cos is biased to 0 for a range of 0->1 from -1->1
-	curDeltas = cos( curDeltas * 2.0*3.14159 )/2.0 + 0.5;
+	//curDeltas = cos( curDeltas * 2.0*3.14159 )/2.0 + 0.5;
+
 
         //if(2.0 > 1.0)
         {
@@ -246,59 +254,79 @@ fragmentShader:`
 			edge.rgb = vec3( 0.0, 0.5, 5.0 );
 
 
-			float index = v_types1.x/6.0+0.08;
+			float index;
 #define TEXTURE_SCALAR 8.0
+			if( v_types1.x > 0.0 ) 
+				index = v_types1.x/6.0-0.08;
+			else
+				index = v_types1.y/6.0-0.08;
+			
+
+
 			vec4 cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 			vec4 cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 			vec4 cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
 			vec4 cxyz1 = (cxy1 * abs(zzNormal.z)) + (cyz1 * abs(zzNormal.x)) + (cxz1 * abs(zzNormal.y));
-			cxyz1 = sqrt((cxyz1*cxyz1)/3.0);
+			vec4 cxyz2 = cxyz1 = sqrt((cxyz1*cxyz1)/3.0);					
 
-			index = v_types1.y/6.0+0.08;
+			if( v_types1.x > 0.0 && v_types1.y > 0.0 ) {
+				index = v_types1.y/6.0-0.08;
+				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+				cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+				vec4 cxyz2 = (cxy1 * abs(zzNormal.z)) + (cyz1 * abs(zzNormal.x)) + (cxz1 * abs(zzNormal.y));
+				cxyz2 = sqrt((cxyz2*cxyz2)/3.0);
+				
+				cxyz1 = cxyz1 * curDeltas.x + cxyz2 * (1.0-curDeltas.x);
+			}
+			
+
+			if( v_types1.z > 0.0 ) {
+				index = v_types1.z/6.0-0.08;
+			} else 
+				index = v_types2.z/6.0-0.08;
+
 			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-			vec4 cxyz2 = (cxy1 * abs(zzNormal.z)) + (cyz1 * abs(zzNormal.x)) + (cxz1 * abs(zzNormal.y));
+			cxyz2 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
 			cxyz2 = sqrt((cxyz2*cxyz2)/3.0);
-			
-			cxyz1 = cxyz1 * curDeltas.x + cxyz2 * (1.0-curDeltas.x);
 
-			index = v_types1.z/6.0+0.08;
+			if( v_types1.z >0.0 && v_types2.x >0.0 ) {
+				index = v_types2.x/6.0-0.08;
+				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+				cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+				vec4 cxyz4 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
+				cxyz4 = sqrt((cxyz4*cxyz4)/3.0);
+				cxyz2 = cxyz2 * curDeltas.y + cxyz4 * (1.0-curDeltas.y);
+			}
+
+			if( v_types2.y > 0.0 ) {
+				// -- compute third point delta between it's types..
+				index = v_types2.y/6.0-0.08 ;
+			} else {
+				index = v_types2.z/6.0 - 0.8;
+			}
 			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
 			vec4 cxyz3 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
 			cxyz3 = sqrt((cxyz3*cxyz3)/3.0);
 
-			index = v_types2.x/6.0+0.08;
-			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
-			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
-			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-			vec4 cxyz4 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
-			cxyz4 = sqrt((cxyz4*cxyz4)/3.0);
-
-			cxyz2 = cxyz3 * curDeltas.y + cxyz4 * (1.0-curDeltas.y);
-
-			// -- compute third point delta between it's types..
-			index = v_types2.y/6.0+0.08;
-			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
-			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
-			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-			vec4 cxyz5 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
-			cxyz5 = sqrt((cxyz5*cxyz5)/3.0);
-
-			index = v_types2.z/6.0+0.08;
-			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
-			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
-			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
-			vec4 cxyz6 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
-			cxyz6 = sqrt((cxyz6*cxyz6)/3.0);
-
-			cxyz3 = cxyz5 * curDeltas.z + cxyz6 * (1.0-curDeltas.z);
+			if( v_types2.y > 0.0 && v_types2.z > 0.0 ) {
+				index = v_types2.z/6.0-0.08;
+				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
+				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
+				cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
+				vec4 cxyz6 = (cxy1.rgba * abs(zzNormal.z)) + (cyz1.rgba * abs(zzNormal.x)) + (cxz1.rgba * abs(zzNormal.y));
+				cxyz6 = sqrt((cxyz6*cxyz6)/3.0);
+				cxyz3 = cxyz3 * curDeltas.z + cxyz6 * (1.0-curDeltas.z);
+			}
 
 			// this double applies simplex... 
-			cxyz1 = cxyz1 * v_simplex.x + cxyz2 * v_simplex.y + cxyz3 * v_simplex.z;
-			face = cxyz1;
+			cxyz1 = ( cxyz1 * v_simplex.x + cxyz2 * v_simplex.y + cxyz3 * v_simplex.z ) ;
+			face = sqrt((cxyz1*cxyz1)/3.0);
 	face.a = 1.0;
 
 //	face.rgb = v_simplex;
@@ -387,6 +415,7 @@ fragmentShader:`
                 }
             }
 
+	//gl_FragColor.rgb += v_simplex/4.0;
 	//gl_FragColor.r = float(v_type1)/6.0;
 
     }

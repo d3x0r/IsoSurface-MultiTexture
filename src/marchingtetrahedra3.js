@@ -173,7 +173,7 @@ var MarchingTetrahedra3 = (function() {
 //				[[4,1,0],[4,0,5]],
 //				[[4,3,0],[4,0,2]],
 				[[5,0,3]],    // vert 1
-				[[2,1,5],[5,1,3]],
+				[[5,2,1],[5,1,3]],
 //				[[5,2,1],[5,1,3]],
 				[[3,1,4]],    // vert 2
 				[[4,2,5]]     // vert 3
@@ -315,9 +315,9 @@ function meshOne(data, dims) {
 				const baseOffset = x+0 + y*dim0 + z * dim0*dim1;
 				const lineArray = linesMin[odd];
 				bits[x+y*dim0] = 0;
-			//if( x < 4 || x > 5 ) continue;
-			//if( y < 6 || y > 6 ) continue;
-			//if( z < 5 ) continue;
+			//if( x < 3 || x >3  ) continue;
+			//if( y < 0 || y > 1 ) continue;
+			//if( z > 5 ) continue;
 
 				for( let l = 0; l < 9; l++ ) {
 					const p0 = lineArray[l][0];
@@ -524,7 +524,7 @@ function meshOne(data, dims) {
 							}
 						}
 					}
-					if( useFace <1 ) continue;
+					//if( useFace > 5 || useFace < 5 ) continue;
 					if( useFace-- ) {
 						const fpi = facePointIndexes[odd][tet][invert][useFace];
 						for( var tri=0;tri< fpi.length; tri++ ){
@@ -628,7 +628,7 @@ function meshOne(data, dims) {
 									if( debug_ && normals[ai].adds >= 3 &&  !normals[ai].normalBuffer[0] && !normals[ai].normalBuffer[1] && !normals[ai].normalBuffer[2] ){ console.log( "zero normal:", ci, normals[ci], normals[ci].normalBuffer, normals[ci].vertBuffer );}//debugger;
 
 
-									//console.log( "vertices", tet, useFace, tri, "pos:", x, y, z, "dels:", normals[ai].typeDelta, normals[bi].typeDelta, normals[ci].typeDelta, "a:", normals[ai].invert, normals[ai].type1, normals[ai].type2, "b:", normals[bi].invert, normals[bi].type1, normals[bi].type2, "c:", normals[ci].invert, normals[ci].type1, normals[ci].type2 );
+									//console.log( "vertices", tet, useFace, tri, "odd:",odd, "invert:", invert, "pos:", x, y, z, "dels:", normals[ai].typeDelta, normals[bi].typeDelta, normals[ci].typeDelta, "a:", normals[ai].invert, normals[ai].type1, normals[ai].type2, "b:", normals[bi].invert, normals[bi].type1, normals[bi].type2, "c:", normals[ci].invert, normals[ci].type1, normals[ci].type2 );
 
 									opts.geometryHelper.addFace( points[ai], points[bi], points[ci], null
 										, invert

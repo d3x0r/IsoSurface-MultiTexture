@@ -194,9 +194,9 @@ function GeometryBuffer() {
 		this.types1[p*3+0] = t[0];//this.type1[p];
 		this.types1[p*3+1] = t[1];//this.type2[p];
 		this.types1[p*3+2] = t[2];//this.type1[p];
-		this.types2[p*3+3] = t[3];//this.type1[p];
-		this.types2[p*3+4] = t[4];//this.type1[p];
-		this.types2[p*3+5] = t[5];//this.type1[p];
+		this.types2[p*3+0] = t[3];//this.type1[p];
+		this.types2[p*3+1] = t[4];//this.type1[p];
+		this.types2[p*3+2] = t[5];//this.type1[p];
 		//console.log( "First copy; set deltas:", td );
 		this.typeDelta[p*3+0] = td[0];//this.typeDelta[p];
 		this.typeDelta[p*3+1] = td[1];//this.typeDelta[p];
