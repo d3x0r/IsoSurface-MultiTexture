@@ -95,7 +95,7 @@
 			          :0
 			 )
 
-			, fieldElements  = testelements[ document.getElementById("datasource").value ]( document.getElementById("fillOutside")?.checked?-1
+			, fieldElements  = testelements[ document.getElementById("datasource").value ]( field, document.getElementById("fillOutside")?.checked?-1
 			          :document.getElementById("fillInside")?.checked?1
 			          :0
 );
