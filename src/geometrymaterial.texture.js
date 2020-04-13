@@ -47,6 +47,8 @@ function GeometryMaterial() {
     #include <logdepthbuf_pars_vertex>
     #include <clipping_planes_pars_vertex>
 
+    flat out float aspect;// = projectionMatrix [1][1] / projectionMatrix [0][0];
+
     attribute  vec4 in_Color;
     attribute  vec4 in_FaceColor;
     attribute  float in_Pow;
@@ -95,6 +97,7 @@ function GeometryMaterial() {
     varying  vec3 ex_Modulous;
 
     void main() {
+        aspect = projectionMatrix [1][1] / projectionMatrix [0][0];
 
     	#include <uv_vertex>
     	#include <uv2_vertex>
@@ -159,9 +162,8 @@ fragmentShader:`
 	uniform sampler2D cursorIconTex;
 	uniform vec3 cursorRayNormal;
 	uniform vec3 cursorRayOrigin;
-	//uniform vec3 cursorIconNormal;
+	uniform vec3 cursorIconNormal;
 	uniform vec3 cursorIconUp;
-
 
 //#define NUM_DIR_LIGHTS 3
     #ifndef FLAT_SHADED
@@ -205,6 +207,7 @@ fragmentShader:`
     
     uniform float logDepthBufFC;
     varying float vFragDepth;
+	flat in float aspect;
 	 in vec3 v_types1;
 	 in vec3 v_types2;
 	
@@ -220,21 +223,19 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 		a = ( Slope.x * n.x + Slope.y * n.y + Slope.z * n.z );
 		r.x = 0.0; r.y = 0.0;
 	        
-		if( a == 0.0 ) { return; }
+		if( a == 0.0 ) return;
 	        
 		b = length( Slope );
 		c = length( n );
-		if( b == 0.0 || c == 0.0 ) { r.y = 1.0; return; } // bad vector choice - if near zero length...
+		if( b == 0.0 || c == 0.0 ) return; // bad vector choice - if near zero length...
 	        
 		cosPhi = a / ( b * c );
 		t = ( n.x * ( o.x - Origin.x ) + n.y * ( o.y - Origin.y ) + n.z * ( o.z - Origin.z ) ) / a;
 	        
-		if( cosPhi > 0.0 || cosPhi < 0.0 ) // at least some degree of insident angle
-		{
+		if( cosPhi > 0.0 || cosPhi < 0.0 ) { // at least some degree of insident angle
 			r.x = cosPhi; r.y = t;
-		}else {
-			{ r.y = 1.0; return; }
-		}
+		} else
+			return;
 	}
 
 
@@ -443,15 +444,12 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
             }
 
 	//gl_FragColor.rgb += v_simplex/4.0;
-	//gl_FragColor.r = float(v_type1)/6.0;
-
 	{
 		// this can work in projected space. against 0 origin for camera.
 				vec2 mouseAngle;
 		IntersectLineWithPlane( cursorRayNormal, vec3(0.0), vNormal.xyz, zPosition.xyz, mouseAngle );
-//gl_FragColor.rgb = zPosition.xyz;
-//return;
-//	gl_FragColor.r = cursorRayNormal.x;zzzZZZ
+
+		// where the mouse intersects the plane of this pixel local position and local normal determine the plane.
 		vec3 mouse_on_this = cursorRayNormal * mouseAngle.y + vec3(0.0);
 
 		//if( distance( mouse_on_this, zPosition.xyz ) < 1.0 ) gl_FragColor.rgb = vec3(1.0,1.0,1.0);
@@ -461,21 +459,31 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 		//IntersectLineWithPlane( zzNormal.xyz, zPosition.xyz, cursorRayNormal, vec3(0.0,0.0,0.0), planeUVAngle );
 		
 		vec3 linePoint                = -( mouse_on_this - zPosition.xyz  );
-		vec3 cursorIconRightProjector = normalize(cross( cursorIconUp, cursorRayNormal ));
-		vec3 cursorIconUpProjector = normalize(cross( cursorIconRightProjector, cursorRayNormal ));
-		float upProjection            = dot( cursorIconUpProjector, linePoint ) / 2.0 + 0.5;
-		float rightProjection         = dot( cursorIconRightProjector, linePoint ) / 2.0 + 0.5;
+		linePoint.y = linePoint.y / aspect;
+		// since the space is already aligned to x,y,z normal; just use the resulting x,y.
+		// cursorRayNormal 
+		//vec3 cursorIconRightProjector = normalize(cross( cursorIconUp, vec3(0.0,0.0,1.0) ));
+		// cursorIconRightProjector, cursorRayNormal 
+		//vec3 cursorIconUpProjector = normalize(cross( cursorIconRightProjector, vec3(0.0,0.0,1.0) ));
+		// project point on plane relative to 'here' scale from -1 to 1(around center) to 0 to 1 (uv)
+		// //dot( cursorIconUpProjector, linePoint )
+		float upProjection            = linePoint.x / 2.0 + 0.5;
+		// //dot( cursorIconRightProjector, linePoint )
+		// apply aspect correction here.
+		float rightProjection         = (linePoint.y) / 2.0 + 0.5;
 		
-		//if( distance( mouse_on_this, zPosition.xyz ) < 1.414 ) 
+		
+		// thing that are in the distance won't get splatted (beyond diagonal 1.0 cubed distance; sqrt(1+1+1) )
+		if( length(linePoint) < 1.7320 ) 
 		{
-			//gl_FragColor.rgb = vec3(upProjection, rightProjection, 0.0);
+			// this shows what the UV map looks like...
+			gl_FragColor.rgb +=( vec3(rightProjection, upProjection, 0.0) / 3.0 );
 		
 			//cursorRayPosition
 			vec4 this_color = texture2D( cursorIconTex, vec2( rightProjection, upProjection ) );
 		        if( this_color.a > 0.0 ) {
 				gl_FragColor.rgb = ( gl_FragColor.rgb * (1.0-this_color.a)) + ( this_color.rgb * this_color.a );
 			}
-			//gl_FragColor.rgb = cursorIconUp;
 		}
 	}
 
