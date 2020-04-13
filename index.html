@@ -358,19 +358,16 @@
 				});
 			}
 
-				canvas.addEventListener( "mousemove", (evt)=>{
-					var pRect = canvas.getBoundingClientRect();
-					var x = evt.clientX - pRect.left;
-					var y = evt.clientY - pRect.top;
-					var x = ( (evt.x - pRect.left) / pRect.width ) * 2.0 - 1.0;
-					var y = ( (evt.y - pRect.top) / pRect.height ) * 2.0 - 1.0;
-					x = -x;
-					y = y;
-					    material.uniforms.cursorRayNormal.value.set( x, y, -0.92 );
-				            
-
-
-				} );
+			canvas.addEventListener( "mousemove", (evt)=>{
+				var pRect = canvas.getBoundingClientRect();
+				var x = evt.clientX - pRect.left;
+				var y = evt.clientY - pRect.top;
+				var x = ( (evt.x - pRect.left) / pRect.width ) * 2.0 - 1.0;
+				var y = ( (evt.y - pRect.top) / pRect.height ) * 2.0 - 1.0;
+				x = -x;
+				y = y;
+				material.uniforms.cursorRayNormal.value.set( -x,- y, (pRect.height/pRect.width)*1.5 );
+			} );
 
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.getElementById('container').appendChild(canvas);

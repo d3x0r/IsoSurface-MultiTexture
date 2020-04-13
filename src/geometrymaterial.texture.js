@@ -459,7 +459,7 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 		//IntersectLineWithPlane( zzNormal.xyz, zPosition.xyz, cursorRayNormal, vec3(0.0,0.0,0.0), planeUVAngle );
 		
 		vec3 linePoint                = -( mouse_on_this - zPosition.xyz  );
-		linePoint.y = linePoint.y / aspect;
+		linePoint.x *= aspect;
 		// since the space is already aligned to x,y,z normal; just use the resulting x,y.
 		// cursorRayNormal 
 		//vec3 cursorIconRightProjector = normalize(cross( cursorIconUp, vec3(0.0,0.0,1.0) ));
@@ -467,10 +467,10 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 		//vec3 cursorIconUpProjector = normalize(cross( cursorIconRightProjector, vec3(0.0,0.0,1.0) ));
 		// project point on plane relative to 'here' scale from -1 to 1(around center) to 0 to 1 (uv)
 		// //dot( cursorIconUpProjector, linePoint )
-		float upProjection            = linePoint.x / 2.0 + 0.5;
+		float upProjection            = linePoint.y / 2.0 + 0.5;
 		// //dot( cursorIconRightProjector, linePoint )
 		// apply aspect correction here.
-		float rightProjection         = (linePoint.y) / 2.0 + 0.5;
+		float rightProjection         = (linePoint.x) / 2.0 + 0.5;
 		
 		
 		// thing that are in the distance won't get splatted (beyond diagonal 1.0 cubed distance; sqrt(1+1+1) )
