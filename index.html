@@ -544,10 +544,10 @@
 
 			// update camera controls
 			cameraControls.update();
-
+		if( material.uniforms && material.uniforms.cursorIconUp ) {
           			material.uniforms.cursorIconUp.value.copy( camera.up ); // this should update to the camera up 
           			material.uniforms.cursorRayOrigin.value.copy( camera.position ); // this should update to the camera up 
-
+	}
 
 
 	  surfacemesh.visible = document.getElementById("showfacets").checked;
