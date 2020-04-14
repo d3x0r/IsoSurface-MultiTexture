@@ -777,7 +777,7 @@ function meshOne(data, dims) {
 	if( showGrid )
 		opts.geometryHelper.markDirty();
 
-	opts.
+	//opts.
 
 	// internal utility function to limit angle
 	function clamp(a,b) {
