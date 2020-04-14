@@ -48,7 +48,10 @@
 		<p><select id="mesher"></select></p>
 		<p>Show facets: <input type="checkbox" id="showfacets" value="checked"></p>
 		<p>Show edges: <input type="checkbox" id="showedges" value="checked"></p>
-		<p>Smooth Shade: <input type="checkbox" id="smoothShade" value="checked"> - Show Grid: <input type="checkbox" id="showGrid" value="checked"></p>
+		<p>Smooth Shade: <input type="checkbox" id="smoothShade" value="checked">
+		 - Show Grid: <input type="checkbox" id="showGrid" value="checked">
+		 - Sharpen Transition: <input type="checkbox" id="sharpenTransition" value="checked">
+		</p>
 		<p>Show Normal Texture: <input type="checkbox" id="showNormal" value="checked"></p>
 		<p>Resolution: <input type="text" id="resolution" value="0"> </p>
 		<p>Vertex count: <input type="text" id="vertcount" value="0"> </p>
@@ -303,7 +306,7 @@
 				material	= THREE.GridGeometryMaterial();
 				material.uniforms.textureMap3.value = window.ttCommon.stack.smudge();
 				material.uniforms.cursorIconTex.value = window.ttCommon.cursorIcon;
-
+				material.defines.CALCULATE_COSINE_MERGE = document.getElementById( "sharpenTransition" ).checked?1:0;
           			material.uniforms.cursorIconUp.value.set( 0, 0, 1 ); // this should update to the camera up 
 
 				surfacemesh	= new THREE.Mesh( geometry, material );
@@ -359,14 +362,16 @@
 			}
 
 			canvas.addEventListener( "mousemove", (evt)=>{
-				var pRect = canvas.getBoundingClientRect();
-				var x = evt.clientX - pRect.left;
-				var y = evt.clientY - pRect.top;
-				var x = ( (evt.x - pRect.left) / pRect.width ) * 2.0 - 1.0;
-				var y = ( (evt.y - pRect.top) / pRect.height ) * 2.0 - 1.0;
-				x = -x;
-				y = y;
-				material.uniforms.cursorRayNormal.value.set( -x,- y, (pRect.height/pRect.width)*1.5 );
+				if( material.uniforms && material.uniforms.cursorRayNormal ) {
+					var pRect = canvas.getBoundingClientRect();
+					var x = evt.clientX - pRect.left;
+					var y = evt.clientY - pRect.top;
+					var x = ( (evt.x - pRect.left) / pRect.width ) * 2.0 - 1.0;
+					var y = ( (evt.y - pRect.top) / pRect.height ) * 2.0 - 1.0;
+					x = -x;
+					y = y;
+					material.uniforms.cursorRayNormal.value.set( -x,- y, (pRect.height/pRect.width)*1.5 );
+				}
 			} );
 
 			renderer.setSize( window.innerWidth, window.innerHeight );
@@ -499,6 +504,9 @@
 			is = document.getElementById( "showGrid" );
 			is.onchange = updateMesh;
 			is.checked = true;
+			is = document.getElementById( "sharpenTransition" );
+			is.onchange = updateMesh;
+
 
 			is = document.getElementById( "fillOutside" );
 			is.onchange = updateTestData;

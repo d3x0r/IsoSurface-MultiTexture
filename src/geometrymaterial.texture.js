@@ -5,6 +5,8 @@ function GeometryMaterial() {
     return new THREE.ShaderMaterial( {
     defines : {
         PHONG:true,
+	CALCULATE_COSINE_MERGE:1,
+	
     },
 	uniforms: THREE.UniformsUtils.merge( [
 
@@ -23,7 +25,8 @@ function GeometryMaterial() {
 	    cursorRayNormal    : { value : new THREE.Vector3( 0, 0, 0 ) },
             cursorRayOrigin    : { value : new THREE.Vector3( 0, 0, 0 ) },
             cursorIconNormal   : { value : new THREE.Vector3( 0, 0, 0 ) },
-            cursorIconUp       : { value : new THREE.Vector3( 0, 0, 0 ) }
+            cursorIconUp       : { value : new THREE.Vector3( 0, 0, 0 ) },
+            textureStackSize : { value : 6.0 } // this should be like Textures.count.
         }
     ] ),
     // lights:true,  (soon!)
@@ -91,7 +94,9 @@ function GeometryMaterial() {
     varying vec3 zrNormal;
     varying vec3 zzPos;
     varying vec4 zPosition;
+#if !CALCULATE_COSINE_MERGE
 	varying vec3 curDeltas;
+#endif
     #define EPSILON 1e-6
 
     varying  vec3 ex_Modulous;
@@ -143,7 +148,9 @@ function GeometryMaterial() {
 	v_types2 = types2;
 	v_simplex = simplex;
 	v_typeDelta = typeDelta;//*simplex;
+#if !CALCULATE_COSINE_MERGE
 	curDeltas = typeDelta;// * simplex; // let opengl scale the whole thing... 
+#endif
 	zzPos = position;
 	zPosition = gl_Position;
         zzNormal = normalize( abs(normal) );
@@ -164,6 +171,7 @@ fragmentShader:`
 	uniform vec3 cursorRayOrigin;
 	uniform vec3 cursorIconNormal;
 	uniform vec3 cursorIconUp;
+	uniform float textureStackSize;
 
 //#define NUM_DIR_LIGHTS 3
     #ifndef FLAT_SHADED
@@ -203,7 +211,9 @@ fragmentShader:`
     varying vec4 ex_FaceColor;
     //uniform sampler2D tex;
     uniform float edge_only;
+#if !CALCULATE_COSINE_MERGE
 	varying vec3 curDeltas;
+#endif
     
     uniform float logDepthBufFC;
     varying float vFragDepth;
@@ -213,7 +223,6 @@ fragmentShader:`
 	
 	in vec3 v_typeDelta;
 	in vec3 v_simplex;
-	//in vec3 v_curDelta;
 
 
 void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
@@ -258,14 +267,39 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 
 	vec3 modulo = ex_Modulous/30.0 + 1.3;
 
-	//vec3 curDeltas;
-	//curDeltas = 1.0 - v_typeDelta;
+#if CALCULATE_COSINE_MERGE
+	vec3 curDeltas;
+	curDeltas = v_typeDelta;
+
+	// floor to one of the types.
+	//curDeltas = vec3(0.0,0.0,0.0);
 
 	// so this is the same result...
 
 	// 0 becomes 1.0 as an output.. -1 cos is biased to 0 for a range of 0->1 from -1->1
-	//curDeltas = cos( curDeltas * 2.0*3.14159 )/2.0 + 0.5;
+	curDeltas = cos( curDeltas * 2.0*3.14159 )/2.0 + 0.5;
+	curDeltas = normalize( curDeltas * curDeltas );
 
+	// use sigmoid curve
+//	curDeltas = 1.0 - (exp( curDeltas ) / ( exp( curDeltas) + 1.0 ) );
+
+#endif
+
+
+	vec3 surfaceBlend;
+#if CALCULATE_COSINE_MERGE
+	surfaceBlend = 1.0- (cos( v_simplex *1.0*3.14159 ) / 2.0 +0.5 );
+	surfaceBlend =surfaceBlend* surfaceBlend;
+	//surfaceBlend = v_simplex;
+	//surfaceBlend =  (exp( v_simplex)/(exp(v_simplex)+1.0));
+	// normalize coordinate.
+	surfaceBlend = surfaceBlend / ( surfaceBlend.r+surfaceBlend.g+surfaceBlend.b);
+#else
+	surfaceBlend = v_simplex;
+#endif
+	//gl_FragColor.rgb = surfaceBlend;
+	//gl_FragColor.a = 1.0;
+	//return;
 
         //if(2.0 > 1.0)
         {
@@ -299,17 +333,17 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 			float index;
 
 #define TEXTURE_SCALAR 8.0
-#define NUMBER_OF_TEXTURE_TYPES 6.0
+#define NUMBER_OF_TEXTURE_TYPES textureStackSize
 // this is -0.08
 #define _3D_TEXTURE_LAYER_CONVERSION ( -(1.0/NUMBER_OF_TEXTURE_TYPES) / 2.0 ) 
 
 			// if type 1 isn't void; use type 1.
 			if( v_types1.x > 0.0 ) 
-				index = v_types1.x/6.0-0.08;
+				index = v_types1.x/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 			else // type 2 will not be void if 1 is void; use this.
-				index = v_types1.y/6.0-0.08;
+				index = v_types1.y/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 
-			const vec4 vec_2 = vec4(2.0,2.0,2.0,2.0);
+			const vec3 vec_2 = vec3(2.0,2.0,2.0); // to square things
 
 			vec4 cxyz1, cxyz2, cxyz3; // texels at this point that are scaled by simplex
 			// compute spacial coordinate index (should add more layers here to auto rotate uv lookups based on fractional values of curDeltas.
@@ -318,13 +352,14 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 			vec4 cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
 			// okay so let's figure this out; the normal is a unit vector, but the sum of each thing is not itself 1.
 			// but rather tus sum of the squares.
-#define MAGIC_FUNCTION sqrt(pow( pow(cxy1 * abs(zzNormal.z),vec_2) + pow(cyz1 * abs(zzNormal.x),vec_2) + pow(cxz1 * abs(zzNormal.y),vec_2), vec_2));
+//#define MAGIC_FUNCTION ( pow(cxy1 * abs(zzNormal.z),vec_2) + pow(cyz1 * abs(zzNormal.x),vec_2) + pow(cxz1 * abs(zzNormal.y),vec_2) )
+#define MAGIC_FUNCTION vec4( pow(cxy1.rgb * zzNormal.z,vec_2) + pow(cyz1.rgb * zzNormal.x,vec_2) + pow(cxz1.rgb * zzNormal.y,vec_2), \
+				1.0-sqrt(pow( ( 1.0-cxy1.a )* zzNormal.z,2.0) + pow((1.0-cyz1.a) * zzNormal.x,2.0) + pow((1.0-cxz1.a) * zzNormal.y,2.0) ) )
 			cxyz1 = MAGIC_FUNCTION;
-			if( v_types1.x == 1.0 ) cxyz1.a = 0.5; else cxyz1.a = 1.0;
 
 			if( v_types1.x > 0.0 && v_types1.y > 0.0 ) {
 				// if both are not void, then compute the other point, and the delta to the other texture
-				index = v_types1.y/6.0-0.08;
+				index = v_types1.y/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 				// this calculates the position in a 3-plane repetition space; scaled by the normal.
 				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
@@ -332,23 +367,21 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 				vec4 cxyz2 = MAGIC_FUNCTION;
 				// this is against a constant; current is the same everywhere.
 				cxyz1 = cxyz1 * curDeltas.x + cxyz2 * (1.0-curDeltas.x);
-				if( v_types1.y == 1.0 ) cxyz1.a = 0.5;
 			}
 			
 
 			if( v_types1.z > 0.0 ) {
-				index = v_types1.z/6.0-0.08;
+				index = v_types1.z/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 			} else 
-				index = v_types2.z/6.0-0.08;
+				index = v_types2.z/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 
 			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
 			cxyz2 = MAGIC_FUNCTION;
-			if( v_types1.z == 1.0 ) cxyz2.a = 0.5; else cxyz2.a = 1.0;
 
 			if( v_types1.z >0.0 && v_types2.x >0.0 ) {
-				index = v_types2.x/6.0-0.08;
+				index = v_types2.x/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 				cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
@@ -357,30 +390,26 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 			}
 
 			if( v_types2.y > 0.0 ) {
-				index = v_types2.y/6.0-0.08 ;
+				index = v_types2.y/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 			} else {
-				index = v_types2.z/6.0 - 0.8;
+				index = v_types2.z/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 			}
 			cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 			cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 			cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
 			cxyz3 = MAGIC_FUNCTION;
-			if( v_types2.y == 1.0 ) cxyz3.a = 0.5; else cxyz3.a = 1.0;
-			
 
 			if( v_types2.y > 0.0 && v_types2.z > 0.0 ) {
-				index = v_types2.z/6.0-0.08;
+				index = v_types2.z/NUMBER_OF_TEXTURE_TYPES + _3D_TEXTURE_LAYER_CONVERSION;
 				cxy1 = texture( textureMap3, vec3(modulo.xy * TEXTURE_SCALAR,index) );
 				cyz1 = texture( textureMap3, vec3(modulo.yz * TEXTURE_SCALAR,index) );
 				cxz1 = texture( textureMap3, vec3(modulo.xz * TEXTURE_SCALAR,index) );
 				vec4 cxyz6 = MAGIC_FUNCTION;
-				if( v_types2.z == 1.0 ) cxyz6.a = 0.5; else cxyz6.a = 1.0;
 				cxyz3 = cxyz3 * curDeltas.z + cxyz6 * (1.0-curDeltas.z);
 			}
+
 			// compute the final composite color into cxzy2 using the barycentric simplex scalar. (always adds to 1)
-			cxyz1 = ( cxyz1 * v_simplex.x + cxyz2 * v_simplex.y + cxyz3 * v_simplex.z ) ;
-			face = cxyz1;
-			face.a = 1.0;
+			face = ( cxyz1 * surfaceBlend.x + cxyz2 * surfaceBlend.y + cxyz3 * surfaceBlend.z ) ;
                 }
                 //else if( ex_flat_color > 0.5 )
                 //{
@@ -459,7 +488,7 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 		//IntersectLineWithPlane( zzNormal.xyz, zPosition.xyz, cursorRayNormal, vec3(0.0,0.0,0.0), planeUVAngle );
 		
 		vec3 linePoint                = -( mouse_on_this - zPosition.xyz  );
-		linePoint.x *= aspect;
+		linePoint.y = linePoint.y / aspect;
 		// since the space is already aligned to x,y,z normal; just use the resulting x,y.
 		// cursorRayNormal 
 		//vec3 cursorIconRightProjector = normalize(cross( cursorIconUp, vec3(0.0,0.0,1.0) ));
@@ -467,10 +496,10 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 		//vec3 cursorIconUpProjector = normalize(cross( cursorIconRightProjector, vec3(0.0,0.0,1.0) ));
 		// project point on plane relative to 'here' scale from -1 to 1(around center) to 0 to 1 (uv)
 		// //dot( cursorIconUpProjector, linePoint )
-		float upProjection            = linePoint.y / 2.0 + 0.5;
+		float upProjection            = linePoint.x / 2.0 + 0.5;
 		// //dot( cursorIconRightProjector, linePoint )
 		// apply aspect correction here.
-		float rightProjection         = (linePoint.x) / 2.0 + 0.5;
+		float rightProjection         = (linePoint.y) / 2.0 + 0.5;
 		
 		
 		// thing that are in the distance won't get splatted (beyond diagonal 1.0 cubed distance; sqrt(1+1+1) )

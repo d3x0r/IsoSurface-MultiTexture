@@ -66,7 +66,7 @@ function TextureStack() {
 		canvas.width =image.width;
 		canvas.height = image.height;
 	    	context = canvas.getContext('2d');
-	        context.fillStyle="clear";
+	        context.fillStyle="#00000000";
         	context.fillRect(0,0,image.width,image.height);
 		
         //this.context.clearRect(20,20,100,50);
