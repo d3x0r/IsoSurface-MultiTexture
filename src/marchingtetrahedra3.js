@@ -582,7 +582,7 @@ function meshOne(data, dims) {
 										ds = 1/Math.sqrt(ds);
 										fnorm[0] *= ds;fnorm[1] *= ds;fnorm[2] *= ds;
 									}else {
-										console.log( "1Still not happy...", fnorm, ds,vA, vB, vC );
+										//console.log( "1Still not happy...", fnorm, ds,vA, vB, vC );
 										// b->A  c->A
 										fnorm[0] = vB[0]-vA[0];fnorm[1] = vB[1]-vA[1];fnorm[2] = vB[2]-vA[2];
 										tmp[0] = vC[0]-vA[0];tmp[1] = vC[1]-vA[1];tmp[2] = vC[2]-vA[2];
@@ -595,7 +595,7 @@ function meshOne(data, dims) {
 											ds2 = -1/Math.sqrt(ds2);
 											fnorm[0] *= ds2;fnorm[1] *= ds2;fnorm[2] *= ds2;
 										} else {
-											console.log( "2Still not happy...", ds2, vA, vB, vC );
+											//console.log( "2Still not happy...", ds2, vA, vB, vC );
 											// B->C  A->C
 											fnorm[0] = vA[0]-vC[0];fnorm[1] = vA[1]-vC[1];fnorm[2] = vA[2]-vC[2];
 											tmp[0] = vB[0]-vC[0];tmp[1] = vB[1]-vC[1];tmp[2] = vB[2]-vC[2];
@@ -607,8 +607,9 @@ function meshOne(data, dims) {
 											if( (ds3=fnorm[0]*fnorm[0]+fnorm[1]*fnorm[1]+fnorm[2]*fnorm[2]) > 0.00000001 ){
 												ds3 = -1/Math.sqrt(ds3);
 												fnorm[0] *= ds3;fnorm[1] *= ds3;fnorm[2] *= ds3;
-											} else 
-												console.log( "3Still not happy...", ds, vA, vB, vC );
+											} 
+											//else 
+											//	console.log( "3Still not happy...", ds, vA, vB, vC );
 										}
 									}
 	

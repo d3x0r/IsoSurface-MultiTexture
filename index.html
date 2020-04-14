@@ -370,7 +370,17 @@
 					var y = ( (evt.y - pRect.top) / pRect.height ) * 2.0 - 1.0;
 					x = -x;
 					y = y;
-					material.uniforms.cursorRayNormal.value.set( -x,- y, (pRect.height/pRect.width)*1.5 );
+					var v = new THREE.Vector3( 0, 0, -1 );
+					v.unproject( camera );
+
+		var rc = new THREE.Raycaster();
+		rc.setFromCamera( new THREE.Vector2( x, y ), camera );
+
+
+					material.uniforms.cursorRayNormal.value.set( -x, -y, (pRect.width/2350)*camera.aspect )  ;
+
+
+
 				}
 			} );
 
