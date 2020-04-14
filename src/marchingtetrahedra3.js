@@ -226,6 +226,8 @@ function meshOne(data, dims) {
 		],
 	]
 
+	const layerToSpaceIndex = [ 0, 1, dim0*dim2+0, 3, 4, 5, 6, dim0*dim1+4, dim0*dim1+5 ];
+	
 	// these are bits that are going to 0.
 	const tetMasks = [ [ 4|0, 1, 2, 4|3, 4|3 ], [ 0, 4|1, 4|2, 3, 4|3 ] ];
 
@@ -274,8 +276,11 @@ function meshOne(data, dims) {
 		pointHolder[1] = new Uint32Array(sizes);
 		crossHolder[0] = new Uint8Array(sizes);
 		crossHolder[1] = new Uint8Array(sizes);
-		for( let zz = normalHolder[0].length; zz < sizes; zz++ ) normalHolder[0].push( null );
-		for( let zz = normalHolder[1].length; zz < sizes; zz++ ) normalHolder[1].push( null );
+		//for( let zz = normalHolder[0].length; zz < sizes; zz++ ) normalHolder[0].push( null );
+	}
+	if( dim2*dim0*dim1*6 > normalHolder[0].length ) {
+		sizes = dim0 * dim1 * dim2 * 6;
+		for( let zz = normalHolder[0].length; zz < sizes; zz++ ) normalHolder[1].push( null );
 	}
 	
 	// all work space has been allocated by this point.
@@ -286,7 +291,7 @@ function meshOne(data, dims) {
 		let tmp;
 		tmp = pointHolder[0]; pointHolder[0] = pointHolder[1]; pointHolder[1] = tmp;
 		tmp = crossHolder[0]; crossHolder[0] = crossHolder[1]; crossHolder[1] = tmp;
-		tmp = normalHolder[0]; normalHolder[0] = normalHolder[1]; normalHolder[1] = tmp;
+		//tmp = normalHolder[0]; normalHolder[0] = normalHolder[1]; normalHolder[1] = tmp;
 	
 		const points_  = pointHolder[1];
 		const crosses_ = crossHolder[1];
@@ -294,7 +299,7 @@ function meshOne(data, dims) {
 		const points  = pointHolder[0];//new Array((dim0+1)+(dim1+1)*9);
 		const normals = normalHolder[0];
 		const crosses = crossHolder[0];
-	
+		const normalBias = z * dim1*dim0*6;
 		let odd = 0;
 		let zOdd = z & 1;
 		cellOrigin[2] = z-0.5;
@@ -312,6 +317,7 @@ function meshOne(data, dims) {
 				cellOrigin[0] = x-0.5;
 	
 				const baseHere = (x+0 + y*dim0)*9;
+				const baseNormalHere = normalBias + (x+0 + y*dim0)*9;
 				const baseOffset = x+0 + y*dim0 + z * dim0*dim1;
 				const lineArray = linesMin[odd];
 				bits[x+y*dim0] = 0;
@@ -329,17 +335,17 @@ function meshOne(data, dims) {
 						if( !(p0 & 4) && !(p1 & 4) ) {
 							switch(l) {
 							case 0:
-								normals[baseHere+l] = normals_[baseHere+2];
+								//normals[baseHere+l] = normals_[baseHere+2];
 								points[baseHere+l] = points_[baseHere+2];
 								crosses[baseHere+l] = crosses_[baseHere+2];
 								break;
 							case 5:
-								normals[baseHere+l] = normals_[baseHere+8];
+								//normals[baseHere+l] = normals_[baseHere+8];
 								points[baseHere+l] = points_[baseHere+8];
 								crosses[baseHere+l] = crosses_[baseHere+8];
 								break;
 							case 4:
-								normals[baseHere+l] = normals_[baseHere+7];
+								//normals[baseHere+l] = normals_[baseHere+7];
 								points[baseHere+l] = points_[baseHere+7];
 								crosses[baseHere+l] = crosses_[baseHere+7];
 								break;
@@ -434,11 +440,11 @@ function meshOne(data, dims) {
 						if( normal ){
 							// 'normal' in this context is a vertex reference
 							debug_ && (normal.adds = 0);
-							normals[baseHere+l] = normal;
+							normals[baseNormalHere+l] = normal;
 						}
 						else {
 							// for normal, just need an accumulator to smooth shade; or to compute face normal into later
-							normal = normals[baseHere+l] = ( new THREE.Vector3(0,0,0) );
+							normal = normals[baseNormalHere+l] = ( new THREE.Vector3(0,0,0) );
 							debug_ && (normal.adds = 0);
 						}
 						crosses[baseHere+l] = 1;
@@ -541,9 +547,9 @@ function meshOne(data, dims) {
 								if( opts.geometryHelper )	{
 
 									// a - b - c    c->b a->b
-									const vA = normals[ai].vertBuffer;
-									const vB = normals[bi].vertBuffer;
-									const vC = normals[ci].vertBuffer;
+									const vA = normals[baseNormalHere + layerToSpaceIndex[ai]].vertBuffer;
+									const vB = normals[baseNormalHere + layerToSpaceIndex[bi]].vertBuffer;
+									const vC = normals[baseNormalHere + layerToSpaceIndex[ci]].vertBuffer;
 
 									if( ( vA[0] === vB[0] && vA[0] === vC[0] )
 									   && ( vA[1] === vB[1] && vA[1] === vC[1] )
@@ -585,9 +591,9 @@ function meshOne(data, dims) {
 										if( (a1t[0]*a1t[0]+a1t[1]*a1t[1]+a1t[2]*a1t[2] ) >0.00000001 && 
 										    (a2t[0]*a2t[0]+a2t[1]*a2t[1]+a2t[2]*a2t[2] ) >0.00000001 )
 											angle = 2*Math.acos( clamp((a1t[0]*a2t[0]+a1t[1]*a2t[1]+a1t[2]*a2t[2])/(Math.sqrt(a1t[0]*a1t[0]+a1t[1]*a1t[1]+a1t[2]*a1t[2])*Math.sqrt(a2t[0]*a2t[0]+a2t[1]*a2t[1]+a2t[2]*a2t[2] ) ), 1.0 ));
-										normals[ai].normalBuffer[0] += fnorm[0]*angle;
-										normals[ai].normalBuffer[1] += fnorm[1]*angle;
-										normals[ai].normalBuffer[2] += fnorm[2]*angle;
+										normals[baseNormalHere + ai].normalBuffer[0] += fnorm[0]*angle;
+										normals[baseNormalHere + ai].normalBuffer[1] += fnorm[1]*angle;
+										normals[baseNormalHere + ai].normalBuffer[2] += fnorm[2]*angle;
 									}
 
 									{
@@ -619,9 +625,11 @@ function meshOne(data, dims) {
 									debug_ && normals[ai].adds++;
 									debug_ && normals[bi].adds++;
 									debug_ && normals[ci].adds++;
-									if( isNaN(normals[ci].normalBuffer[0]) || isNaN(normals[ci].normalBuffer[1]) || isNaN(normals[ci].normalBuffer[2]) )debugger;
-									if( isNaN(normals[bi].normalBuffer[0]) || isNaN(normals[bi].normalBuffer[1]) || isNaN(normals[bi].normalBuffer[2]) )debugger;
-									if( isNaN(normals[ai].normalBuffer[0]) || isNaN(normals[ai].normalBuffer[1]) || isNaN(normals[ai].normalBuffer[2]) )debugger;
+									if( debug_ ) {
+										if( isNaN(normals[ci].normalBuffer[0]) || isNaN(normals[ci].normalBuffer[1]) || isNaN(normals[ci].normalBuffer[2]) )debugger;
+										if( isNaN(normals[bi].normalBuffer[0]) || isNaN(normals[bi].normalBuffer[1]) || isNaN(normals[bi].normalBuffer[2]) )debugger;
+										if( isNaN(normals[ai].normalBuffer[0]) || isNaN(normals[ai].normalBuffer[1]) || isNaN(normals[ai].normalBuffer[2]) )debugger;
+									}
 									
 									if( debug_ && normals[ci].adds >= 3 &&  !normals[ci].normalBuffer[0] && !normals[ci].normalBuffer[1] && !normals[ci].normalBuffer[2] ){ console.log( "zero normal:", ci, normals[ci], normals[ci].normalBuffer, normals[ci].vertBuffer );}//debugger;
 									if( debug_ && normals[bi].adds >= 3 &&  !normals[bi].normalBuffer[0] && !normals[bi].normalBuffer[1] && !normals[bi].normalBuffer[2] ){ console.log( "zero normal:", ci, normals[ci], normals[ci].normalBuffer, normals[ci].vertBuffer );}//debugger;
@@ -630,7 +638,10 @@ function meshOne(data, dims) {
 
 									//console.log( "vertices", tet, useFace, tri, "odd:",odd, "invert:", invert, "pos:", x, y, z, "dels:", normals[ai].typeDelta, normals[bi].typeDelta, normals[ci].typeDelta, "a:", normals[ai].invert, normals[ai].type1, normals[ai].type2, "b:", normals[bi].invert, normals[bi].type1, normals[bi].type2, "c:", normals[ci].invert, normals[ci].type1, normals[ci].type2 );
 
-									opts.geometryHelper.addFace( points[ai], points[bi], points[ci], null
+									opts.geometryHelper.addFace( 
+										points[baseOffset+fpi[tri][0]], points[baseOffset+fpi[tri][1]], points[baseOffset+fpi[tri][2]]
+										//points[ai], points[bi], points[ci]
+										, null
 										, invert
 										, [normals[ai].type1%10, normals[ai].type2%10, normals[bi].type1%10, normals[bi].type2%10, normals[ci].type1%10, normals[ci].type2%10 ]
 										, [normals[ai].typeDelta, normals[bi].typeDelta, normals[ci].typeDelta] );
@@ -639,7 +650,8 @@ function meshOne(data, dims) {
 
 								}else{
 									// in this mode, normals is just a THREEE.vector3.
-									faces.push( f = new THREE.Face3( points[ai], points[bi], points[ci]
+									faces.push( f = new THREE.Face3( 
+										points[baseOffset+fpi[tri][0]], points[baseOffset+fpi[tri][1]], points[baseOffset+fpi[tri][2]]
 												,[normals[ai],normals[bi],normals[ci]] )
 									);
 
@@ -726,8 +738,10 @@ function meshOne(data, dims) {
 									ds = 1/Math.sqrt(ds);
 									fnorm[0] *= ds;fnorm[1] *= ds;fnorm[2] *= ds;
 
-									opts.geometryHelper.addFace( points[ai], points[bi], points[ci]
-												, fnorm, invert
+									opts.geometryHelper.addFace( 
+										points[baseOffset+fpi[tri][0]], points[baseOffset+fpi[tri][1]], points[baseOffset+fpi[tri][2]]
+										//points[ai], points[bi], points[ci]
+										, fnorm, invert
 										, [normals[ai].type1%10, normals[ai].type2%10, normals[bi].type1%10, normals[bi].type2%10, normals[ci].type1%10, normals[ci].type2%10 ]
 										, [normals[ai].typeDelta, normals[bi].typeDelta, normals[ci].typeDelta]  );
 								}else {
@@ -745,7 +759,10 @@ function meshOne(data, dims) {
 										v_cb.cross(v_ab);
 									}
 									v_cb.normalize();
-									faces.push( f = new THREE.Face3( points[ai], points[bi], points[ci], v_cb.clone() ) );
+									faces.push( f = new THREE.Face3( 
+										points[baseOffset+fpi[tri][0]], points[baseOffset+fpi[tri][1]], points[baseOffset+fpi[tri][2]]
+										//points[ai], points[bi], points[ci]
+										, v_cb.clone() ) );
 								}
 							}
 						}
@@ -759,6 +776,8 @@ function meshOne(data, dims) {
 	// update geometry (could wait for index.html to do this?
 	if( showGrid )
 		opts.geometryHelper.markDirty();
+
+	opts.
 
 	// internal utility function to limit angle
 	function clamp(a,b) {
