@@ -31,6 +31,9 @@ TextureDone( ()=>{
 	window.doInit();
 })
 
+import {createTestData} from "./testdata.js"
+
+window.createTestData = createTestData;
 
 export {TextureStack,common }
 //THREE.GridGeometryBuffer 
