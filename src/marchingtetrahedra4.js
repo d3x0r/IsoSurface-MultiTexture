@@ -197,11 +197,11 @@ const debug_ = false;
 	var newData = [];
 	const showGrid = opts.showGrid;
 
-	meshOne( data,dims );
+	meshCloud( data,dims );
 	return null;
 
 
-function meshOne(data, dims) {
+function meshCloud(data, dims) {
 
 	// values input to this are in 2 planes for lower and upper values
 	const dim0 = dims[0];
@@ -810,6 +810,9 @@ function meshOne(data, dims) {
 	if( showGrid )
 		opts.geometryHelper.markDirty();
 
+	opts.points  = points;   
+	opts.normals = normals;
+	opts.bits    = bits; 
 	// internal utility function to limit angle
 	function clamp(a,b) {
 		if( a < b ) return a; return b;
