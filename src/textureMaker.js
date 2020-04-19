@@ -31,9 +31,12 @@ const BASE_COLOR_FLOUR = [0xD6, 0xC8, 0xBA,255];
 const RANGES = [BASE_COLOR_BLACK, BASE_COLOR_DARK_BLUE, BASE_COLOR_MID_BLUE, BASE_COLOR_LIGHT_TAN, BASE_COLOR_DARK_GREEN, BASE_COLOR_LIGHT_TAN, BASE_COLOR_DARK_BROWN, BASE_COLOR_WHITE, BASE_COLOR_BLACK ];
 const RANGES_THRESH = [0, 0.02, 0.20, 0.24, 0.29, 0.50, 0.75, 0.99, 1.0 ];
 
+var logs = 1000;
+var logs2 = 1000;
 
 function offscreenSurface() {
 	let output_offset = 0;
+	const pointBuffer = [0,0,0,0];
 	const surface = {
 		canvas : document.createElement( "canvas" ),
 		ctx :null,
@@ -43,7 +46,13 @@ function offscreenSurface() {
 			output_offset = 0;
 		},
 		get() {	
-			return [output[output_offset+0],output[output_offset+1],output[output_offset+2],output[output_offset+3]];
+			pointBuffer[0] = output[output_offset+0];
+			pointBuffer[1] = output[output_offset+1];
+			pointBuffer[2] = output[output_offset+2];
+			pointBuffer[3] = output[output_offset+3];
+	if( pointBuffer[0] < 0 || pointBuffer[1] < 0 || pointBuffer[2] < 0 ) debugger;
+if( logs-- > 0 ) { logs2 = 2; console.log( "Read:", output_offset, pointBuffer ); }
+			return pointBuffer;
 		},
 		smudge() {
 			surface.ctx.putImageData(imageData, 0,0);
@@ -53,7 +62,8 @@ function offscreenSurface() {
 	surface.canvas.width = 512;
 	surface.canvas.height = 512;
 	surface.ctx = surface.canvas.getContext( "2d" );
-document.body.appendChild( surface.canvas );
+	document.body.appendChild( surface.canvas );
+
 	const imageData = surface.ctx.getImageData(0, 0, surface.canvas.width, surface.canvas.height );
 	const output = imageData.data;
 
@@ -73,6 +83,8 @@ function ColorAverage( a, b, i,m) {
 
     function plot(d) { 
 		//console.log( "output at", output_offset, d )
+if( logs2-- > 0 ) console.log( "write:", output_offset, d );
+if( d[0] < 0 || d[1] < 0 || d[2] < 0 ) debugger;
         output[output_offset+0] = d[0]; 
         output[output_offset+1] = d[1]; 
         output[output_offset+2] = d[2]; 
@@ -91,13 +103,13 @@ function makeGranite() {
 		var config = {
 			patchSize : 128,
 			seed_noise : "Blue",
-			repeat_modulo : 1930, // make the thing tilable
-		
+			repeat_modulo : 1024, // make the thing tilable
+			repeat_modulo2 : {x:2048, y:128} // make the thing tilable
 		}
 		var config2 = {
 			patchSize : 32,
 			seed_noise : "Noise3",
-			repeat_modulo : 1930, // make the thing tilable
+			repeat_modulo : 1024, // make the thing tilable
 		
 		}
 	        
@@ -107,7 +119,7 @@ function makeGranite() {
 		var p1 = noise( config );
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p1.get(0+x*2.9,0+y*0.7,0);
+				let v = p1.get(0+x*4,0+y*0.5,0);
 				//surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 );
 				surface.plot( surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 ) );
 			}
@@ -116,7 +128,7 @@ function makeGranite() {
 		surface.reset();
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p1.get(0.1+x*9.9,2+y*11.7,0);
+				let v = noise2.get(0.1+x*2,2+y*2,0);
 				//surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 );
 				if( v > 0.70 ) 
 					surface.plot( surface.colorAvg( surface.get(), BASE_COLOR_WHITE, v-0.70, 0.30 ) );
@@ -139,13 +151,13 @@ function makeRough() {
 		var config = {
 			patchSize : 128,
 			seed_noise : "Blue",
-			repeat_modulo : 1930, // make the thing tilable
+			repeat_modulo : 2048, // make the thing tilable
 		
 		}
 		var config2 = {
 			patchSize : 32,
 			seed_noise : "Noise3",
-			repeat_modulo : 1930, // make the thing tilable
+			repeat_modulo : 2048, // make the thing tilable
 		
 		}
 	        
@@ -189,7 +201,7 @@ function makeSoil() {
 		var config = {
 			patchSize : 128,
 			seed_noise : "Brown",
-			repeat_modulo : 930, // make the thing tilable
+			repeat_modulo : 128, // make the thing tilable
 		
 		}
 	        
@@ -199,7 +211,7 @@ function makeSoil() {
 		var p1 = noise( config );
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p1.get(0+x*0.7,0+y*0.7,0);
+				let v = p1.get(0+x*0.5,0+y*0.5,0);
 				//surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 );
 				surface.plot( surface.colorAvg( BASE_COLOR_BROWN, BASE_COLOR_DARK_BROWN, v, 1.0 ) );
 			}
@@ -207,14 +219,14 @@ function makeSoil() {
 		var config2 = {
 			patchSize : 128,
 			seed_noise : "brownz",
-			repeat_modulo : 930, // make the thing tilable
+			repeat_modulo : 1024, // make the thing tilable
 		
 		}
 		var p1 = noise( config2 );
 		surface.reset();
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p1.get(0+x*4.7,0+y*4.7,0);
+				let v = p1.get(0+x*4,0+y*4,0);
 				//surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 );
 				if( v > 0.68 )
 					surface.plot( surface.colorAvg( surface.get(), BASE_COLOR_DARK_GREEN, v-0.68, 0.50 ) );
@@ -236,58 +248,65 @@ function makeWater() {
 	function makeSurface() {
                 
 		var config = {
-			patchSize : 128,
+			patchSize : 32,
 			seed_noise : "BlueGreen1",
-			repeat_modulo : 250, // make the thing tilable
+			repeat_modulo : 128, // make the thing tilable
 		
 		}
 	        
+		var config2 = {
+			patchSize : 64,
+			seed_noise : "moreBlues",
+			repeat_modulo : 128, // make the thing tilable
+		
+		}
+		var config3 = {
+			patchSize : 32,
+			seed_noise : "aBlues",
+			repeat_modulo : 128, // make the thing tilable
+		
+		}
 		var surface = offscreenSurface();
 	        
-		surface.fill = ()=>{	        
+		let c;
+		surface.fill = ()=>{	
+		config.seed_noise += '1';
 		var p1 = noise( config );
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p1.get(0+x*0.3,0+y*0.25,0);
+				let v = p1.get(0+x*0.25,0+y*0.25,0);
 				//surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 );
-				surface.plot( surface.colorAvg( BASE_COLOR_DARK_BLUE,BASE_COLOR_DARK_BLUEGREEN, v, 1.0 ) );
+		if( v < 0 ) debugger;
+				surface.plot( (c=surface.colorAvg( BASE_COLOR_DARK_BLUE,BASE_COLOR_DARK_BLUEGREEN, v, 1.0 )),(c[4]=64),c );
 			}
 
-		var config2 = {
-			patchSize : 128,
-			seed_noise : "moreBlues",
-			repeat_modulo : 300, // make the thing tilable
-		
-		}
+		config2.seed_noise += '1';
 		var p1 = noise( config2 );
 		surface.reset();
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p1.get(0+x*0.7,0+y*0.83,0);
+				let v = p1.get(0+x*0.25,0+y*0.25,0);
 				//surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 );
 				if( v > 0.68 )
-					surface.plot( surface.colorAvg( surface.get(), BASE_COLOR_LIGHTCYAN, v-0.68, 4*0.32 ) );
+					surface.plot( c=surface.colorAvg( surface.get(), BASE_COLOR_LIGHTCYAN, 0.16 - Math.abs( 0.16- (v-0.68) ), 3*0.42 ),(c[4]=64),c );
 				else if( v < 0.32 ) 
-					surface.plot( surface.colorAvg( surface.get(), BASE_COLOR_LIGHTCYAN, 0.32-v, 0.60 ) );
+					surface.plot( c=surface.colorAvg( surface.get(), BASE_COLOR_LIGHTCYAN, 0.16-Math.abs((0.16-v)), 3*0.25 ),(c[4]=64),c );
 				else if( v < 0.55 ) 
-					surface.plot( surface.colorAvg( surface.get(), BASE_COLOR_MID_BLUE, 0.55-v-0.32, 0.20 ) );
-				else
+					surface.plot( c=surface.colorAvg( surface.get(), BASE_COLOR_MID_BLUE, 0.16 - Math.abs( 0.48-v ), 3*0.28 ),(c[4]=64),c );
+				else{
+//logs = 2;
 					surface.plot( surface.get() );
+				}
 			}
 
-		var config2 = {
-			patchSize : 128,
-			seed_noise : "aBlues",
-			repeat_modulo : 300, // make the thing tilable
-		
-		}
-		var p1 = noise( config2 );
+		config3.seed_noise += '1';
+		var p1 = noise( config3 );
 		surface.reset();
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p1.get(0+x*1.5,0+y*2.2,0);
+				let v = p1.get(0+x*0.25,0+y*0.25,0);
 				if( v > 0.44 )
-					surface.plot( surface.colorAvg( surface.get(), BASE_COLOR_DARK_BLUE, v-0.68, 4*0.32 ) );
+					surface.plot( c=surface.colorAvg( surface.get(), BASE_COLOR_DARK_BLUE, v-0.68, 4*0.32 ),(c[4]=64),c );
 				else
 					surface.plot( surface.get() );
 			}
@@ -305,21 +324,21 @@ function makeGrass() {
 	const surface = makeSurface();
 	function makeSurface() {
 		var config = {
-			patchSize : 128,
+			patchSize : 32,
 			seed_noise : "Green",
-			repeat_modulo : 400, // make the thing tilable
+			repeat_modulo : 128, // make the thing tilable
 		
 		}
 		var config2 = {
 			patchSize : 128,
 			seed_noise : "Green2",
-			repeat_modulo : 400, // make the thing tilable
+			repeat_modulo : 1024, // make the thing tilable
 		
 		}
 		var config3 = {
-			patchSize : 128,
+			patchSize : 512,
 			seed_noise : "Green3",
-			repeat_modulo : 750, // make the thing tilable
+			repeat_modulo : 512, // make the thing tilable
 		
 		}
 	        
@@ -329,7 +348,7 @@ function makeGrass() {
 		var p1 = noise( config );
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p1.get(0+x,0+y*10,0);
+				let v = p1.get(0+x*0.25,0+y*3,0);
 				//surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 );
 				surface.plot( surface.colorAvg( BASE_COLOR_AGED_GREEN, BASE_COLOR_DARK_GREEN, v, 1.0 ) );
 			}
@@ -349,7 +368,7 @@ function makeGrass() {
 		var config4 = {
 			patchSize : 128,
 			seed_noise : "Green5",
-			repeat_modulo : 412, // make the thing tilable
+			repeat_modulo : 512, // make the thing tilable
 		
 		}
 		var config5 = {
@@ -361,7 +380,7 @@ function makeGrass() {
 		var config6 = {
 			patchSize : 128,
 			seed_noise : "Green9",
-			repeat_modulo : 800, // make the thing tilable
+			repeat_modulo : 1024, // make the thing tilable
 		
 		}
 	        
@@ -382,8 +401,8 @@ function makeGrass() {
 		surface.reset();
 		for( let y = 0; y < surface.canvas.height; y++ )
 			for(let x = 0; x < surface.canvas.width; x++ ) {
-				let v = p2.get((x+y)*7,0+y,0);
-				let v2 = p3.get(x*2.1,0+y*1.9,0);
+				let v = p2.get((x+y)*3,0+y,0);
+				let v2 = p3.get(x*2,0+y*2,0);
 				//surface.colorAvg( BASE_COLOR_WHITE, BASE_COLOR_LIGHTGREY, v, 1.0 );
 				if( v > 0.62 )
 					surface.plot( surface.colorAvg( surface.get()
@@ -410,7 +429,7 @@ function makeSand() {
 		var config = {
 			patchSize : 128,
 			seed_noise : "tan",
-			repeat_modulo : 900, // make the thing tilable
+			repeat_modulo : 1024, // make the thing tilable
 		
 		}
 	        
@@ -439,7 +458,7 @@ function makeTerrain() {
 		var config = {
 			patchSize : 128,
 			seed_noise : "land",
-			repeat_modulo : 400, // make the thing tilable
+			repeat_modulo : 128, // make the thing tilable
 		
 		}
 	        
