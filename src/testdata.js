@@ -5,7 +5,7 @@ var noiseOpts;
 var noiseMap = noise(noiseOpts ={
 	patchSize : 256,
 	seed_noise : '' + Date.now(),
-	repeat_modulo : 22,
+	repeat_modulo : 256,
 	//base : 0,
 } );
 
@@ -199,7 +199,23 @@ function createTestData() {
 				noiseMap = noise(noiseOpts );
 				pos += 5;
 			}
-			return   y +0.5  -noiseMap.get(x*40+5 + pos,0/*y*40+3*/,z*40+0.6)*2;
+			return   y +1.8  - noiseMap.get(x*40+5 + pos,0/*y*40+3*/,z*40+0.6)*3;
+			return   noiseMap.get(x*40+5 + pos,0/*y*40+3*/,z*40+0.6)*2;
+		}
+	);
+
+	var pos = 0;
+	result['Terrain 3'] = makeVolume(
+		[[-1, 1, 0.05],
+		 [-1, 1, 0.05],
+		 [-1, 1, 0.05]],
+		function(x,y,z) {
+		    	if( x==-1&&y===-1&&z===-1) {
+				noiseOpts.seed = '' + Date.now();
+				noiseMap = noise(noiseOpts );
+				pos += 5;
+			}
+			return   noiseMap.get(x*40+5 + pos,y*40+3,z*40+0.6)*2 - 1.0;
 		}
 	);
 

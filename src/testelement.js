@@ -185,6 +185,14 @@ function createTestElementData() {
 			return  y + PerlinNoise.noise(x*2+5,y*2+3,z*2+0.6);
 		}
 	);
+	result['Terrain 3'] = makeVolume(
+		[[-1, 1, 0.05],
+		 [-1, 1, 0.05],
+		 [-1, 1, 0.05]],
+		function(x,y,z) {
+			return  y + PerlinNoise.noise(x*2+5,y*2+3,z*2+0.6);
+		}
+	);
 	result['Terrain'] = makeVolume(
 		[[-1, 1, 0.05],
 		 [-1, 1, 0.05],

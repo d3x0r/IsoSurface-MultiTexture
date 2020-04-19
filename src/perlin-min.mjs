@@ -1,7 +1,7 @@
 
 import {SaltyRNG} from "./salty_random_generator.js"
 
-const generate_3D = false;
+const generate_3D = true;
 //-------------------------
 // Usage : import {noise} from "./perlin-min.js"
 //  var noise = new noise( config )
