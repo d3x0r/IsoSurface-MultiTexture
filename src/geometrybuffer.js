@@ -185,6 +185,11 @@ function GeometryBuffer() {
 
 		return p; // first 'copy' doesn't need to be copied.
 	}
+//	else if( n ) {
+//		if( Math.abs(this.normal[p*3+0] - n[0] )<0.0001 && Math.abs(this.normal[p*3+1]- n[1]) < 0.0001&& Math.abs(this.normal[p*3+2] - n[2]) < 0.0001 )
+//			return p;
+//	}
+
 	if( bc && !this.copies[p]++ ) {
 	
 		this.simplex[p*3+0] = bc[0];
