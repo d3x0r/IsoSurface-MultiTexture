@@ -21,10 +21,11 @@
 	<script src="./src/marchingtetrahedra.js"></script>
 	<script src="./src/marchingtetrahedra2.js"></script>
 	<script src="./src/marchingtetrahedra3.js"></script>
+	<script src="./src/marchingtetrahedra4.js"></script>
 	<script src="./src/surfacenets.js"></script>
 
 	<script src="./src/perlinnoise.js"></script>
-	<script src="./src/testdata.js"></script>
+	<script type="module" src="./src/testdata.js"></script>
 	<script src="./src/testelement.js"></script>
 
 		<link href="./src/main.css" rel="stylesheet">
@@ -58,7 +59,7 @@
 		<p>Face count: <input type="text" id="facecount" value="0"> </p>
 		<p>(Approx.) Time:<input type="text" id="meshtime" value="0"> </p>
 		<p>Inflation:<input type="range" id="inflation" value="50"> </p>
-		<p>Maximize: <input type="checkbox" id="maximize" value="checked"> - Minimize: <input type="checkbox" id="minimize" value="checked"></p>
+		<p>Maximize: <input type="checkbox" id="maximize" value="checked"> - Midify: <input type="checkbox" id="midify" value="checked"> - Minimize: <input type="checkbox" id="minimize" value="checked"></p>
 		<p>Outside: <input type="radio" name="filler"  id="fillOutside" value="checked"> Inside: <input type="radio" name="filler"  id="fillInside" value="checked"> - Open: <input type="radio" name="filler" id="fillOpen" value="checked"></p>
 	  </div>
 	</div>
@@ -68,11 +69,12 @@
 		var camera, cameraControl;
 		var geometry, surfacemesh, wiremesh;
 		var meshers = {
-			'Marching Tetraheda 3 (DCL-plane)' : MarchingTetrahedra3
-		  , 'Marching Tetraheda 2 (DCL-cell)' : MarchingTetrahedra2
-		  , 'Marching Cubes': MarchingCubes
-		  , 'Marching Tetraheda' : MarchingTetrahedra
-			,  'Naive Surface Nets': SurfaceNets
+		    'Marching Tetraheda 4 (DCL-plane)' : MarchingTetrahedra4
+		  , 'Marching Tetraheda 3 (DCL-plane)' : MarchingTetrahedra3
+		//  , 'Marching Tetraheda 2 (DCL-cell)' : MarchingTetrahedra2
+		 // , 'Marching Cubes': MarchingCubes
+		 // , 'Marching Tetraheda' : MarchingTetrahedra
+		//	,  'Naive Surface Nets': SurfaceNets
 		};
 		var testdata = {};
 		var testelements = {};
@@ -114,6 +116,7 @@
 
 			let maximize = document.getElementById( "maximize" ).checked;
 			let minimize = document.getElementById( "minimize" ).checked;
+			let midify = document.getElementById( "midify" ).checked;
 
 			let n = 0;
 			var newData = [];
@@ -122,7 +125,9 @@
 					for( var x = 0; x < field.dims[0]; x++ ) {
 						var a = field.data[n];
 						if( a > 0 ) {
-							if( minimize ) {
+							if( midify ) {
+								newData.push( 1.0 );
+							} else if( minimize ) {
 								newData.push( 500 );
 							}
 							else if( maximize ) {
@@ -131,7 +136,13 @@
 							else {
 								newData.push( a * inflatVal );
 							}
-						}else newData.push( a );
+						}else {
+							if( midify ) {
+								newData.push( -1.0 );
+							} 
+							else
+								newData.push( a );
+						}
 						n++;
 					}
 				}
@@ -482,7 +493,7 @@
 */
 
 			//Initialize dom elements
-			testdata = createTestData(0);
+			testdata = window.createTestData(0);
 			testelements = createTestElementData();
 			var ds = document.getElementById("datasource");
 			for(var id in testdata) {
@@ -505,6 +516,8 @@
 			is.onchange = updateMesh;
 			is = document.getElementById( "maximize" );
 			is.onchange = updateMesh;
+			is = document.getElementById( "midify" );
+			is.onchange = updateMesh;
 			is = document.getElementById( "smoothShade" );
 			is.onchange = updateMesh;
 			is.checked = true;
@@ -516,6 +529,7 @@
 			is.checked = true;
 			is = document.getElementById( "sharpenTransition" );
 			is.onchange = updateMesh;
+			is.checked = true;
 
 
 			is = document.getElementById( "fillOutside" );
@@ -527,7 +541,7 @@
 			is.checked = true;
 
 			function updateTestData() {
-				testdata = createTestData( document.getElementById("fillOutside").checked?-1
+				testdata = window.createTestData( document.getElementById("fillOutside").checked?-1
 			          :document.getElementById("fillInside").checked?1
 			          :0);
 				testelements = createTestElementData( );
