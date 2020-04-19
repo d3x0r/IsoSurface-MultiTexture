@@ -11,13 +11,17 @@ Inspired by : <A href="https://www.youtube.com/watch?v=aKYlikFAV4k"> (A*)</A>, <
 <SCRIPT type="module" src="./textureMaker.js"></SCRIPT>
 <SCRIPT type="module" >
 	
-	//import {Textures} from "./textureMaker.js";
-	import {Textures} from "./textureLoader.js";
+	import {Textures} from "./textureMaker.js";
+	//import {Textures} from "./textureLoader.js";
 	import {TextureStack} from "./textureStack.canvas.js";
 	var stack = TextureStack();
 	
 	window.Textures = Textures;
-        for( let texture of Textures ) stack.add( texture );
+// setInterval( Textures[0].fill, 2000 );
+
+        for( let texture of Textures ) //stack.add( texture );
+		texture.fill();
+
 	//document.body.appendChild( texture.canvas );
 </SCRIPT>
 </HTML>
