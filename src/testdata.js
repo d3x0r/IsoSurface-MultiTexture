@@ -1,3 +1,14 @@
+
+import {noise} from "./perlin-min.mjs"
+
+var noiseOpts;
+var noiseMap = noise(noiseOpts ={
+	patchSize : 256,
+	seed_noise : '' + Date.now(),
+	repeat_modulo : 22,
+	//base : 0,
+} );
+
 function createTestData() {
 	var result = {};
 	
@@ -177,6 +188,21 @@ function createTestData() {
 			return (x*x + y*y + z*z) - PerlinNoise.noise(x*2,y*2,z*2);
 		}
 	);
+	var pos = 0;
+	result['Terrain 2'] = makeVolume(
+		[[-1, 1, 0.05],
+		 [-1, 1, 0.05],
+		 [-1, 1, 0.05]],
+		function(x,y,z) {
+		    	if( x==-1&&y===-1&&z===-1) {
+				noiseOpts.seed = '' + Date.now();
+				noiseMap = noise(noiseOpts );
+				pos += 5;
+			}
+			return   y +0.5  -noiseMap.get(x*40+5 + pos,0/*y*40+3*/,z*40+0.6)*2;
+		}
+	);
+
 	
 	result['Terrain'] = makeVolume(
 		[[-1, 1, 0.05],
@@ -283,3 +309,5 @@ function createTestData() {
 	
 	return result;
 }
+
+export {createTestData}
