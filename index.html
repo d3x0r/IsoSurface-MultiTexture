@@ -59,8 +59,13 @@
 		<p>Face count: <input type="text" id="facecount" value="0"> </p>
 		<p>(Approx.) Time:<input type="text" id="meshtime" value="0"> </p>
 		<p>Inflation:<input type="range" id="inflation" value="50"> </p>
-		<p>Maximize: <input type="checkbox" id="maximize" value="checked"> - Midify: <input type="checkbox" id="midify" value="checked"> - Minimize: <input type="checkbox" id="minimize" value="checked"></p>
-		<p>Outside: <input type="radio" name="filler"  id="fillOutside" value="checked"> Inside: <input type="radio" name="filler"  id="fillInside" value="checked"> - Open: <input type="radio" name="filler" id="fillOpen" value="checked"></p>
+		<p>none: <input type="radio" name="inflationMode" id="noInflation" value="checked"> 
+			Maximize: <input type="radio" name="inflationMode" id="maximize" > 
+			1:1<input type="radio" name="inflationMode" id="midify" > 
+			10:1<input type="radio" name="inflationMode" id="harden">
+			1:10<input type="radio" name="inflationMode" id="brick">
+			Minimize: <input type="radio" id="minimize" ></p>
+		<p>Outside: <input type="radio" name="filler"  id="fillOutside" > Inside: <input type="radio" name="filler"  id="fillInside" > - Open: <input type="radio" name="filler" id="fillOpen" value="checked"></p>
 	  </div>
 	</div>
 
@@ -69,7 +74,7 @@
 		var camera, cameraControl;
 		var geometry, surfacemesh, wiremesh;
 		var meshers = {
-		    'Marching Tetraheda 4 (DCL-plane)' : MarchingTetrahedra4
+		    'Marching Tetraheda 4 (DCL-volume)' : MarchingTetrahedra4
 		  , 'Marching Tetraheda 3 (DCL-plane)' : MarchingTetrahedra3
 		//  , 'Marching Tetraheda 2 (DCL-cell)' : MarchingTetrahedra2
 		 // , 'Marching Cubes': MarchingCubes
@@ -117,6 +122,8 @@
 			let maximize = document.getElementById( "maximize" ).checked;
 			let minimize = document.getElementById( "minimize" ).checked;
 			let midify = document.getElementById( "midify" ).checked;
+			let harden = document.getElementById( "harden" ).checked;
+			let brick = document.getElementById( "brick" ).checked;
 
 			let n = 0;
 			var newData = [];
@@ -125,7 +132,11 @@
 					for( var x = 0; x < field.dims[0]; x++ ) {
 						var a = field.data[n];
 						if( a > 0 ) {
-							if( midify ) {
+							if( harden ) {
+								newData.push( 9.0 );  // 1:10
+							} else if( brick ) {
+								newData.push( 1.0 );  // 1:10
+							} else if( midify ) {
 								newData.push( 1.0 );
 							} else if( minimize ) {
 								newData.push( 500 );
@@ -137,7 +148,11 @@
 								newData.push( a * inflatVal );
 							}
 						}else {
-							if( midify ) {
+							if( harden ) {	
+								newData.push( -1 );  // 1:10
+							} else if( brick ) {
+								newData.push( -9 );  // 1:10
+							} else if( midify ) {
 								newData.push( -1.0 );
 							} 
 							else
@@ -512,11 +527,17 @@
 			var is;
 			is = document.getElementById( "inflation" );
 			is.oninput = updateMesh;
+			is = document.getElementById( "noInflation" );
+			is.onchange = updateMesh;
 			is = document.getElementById( "minimize" );
 			is.onchange = updateMesh;
 			is = document.getElementById( "maximize" );
 			is.onchange = updateMesh;
 			is = document.getElementById( "midify" );
+			is.onchange = updateMesh;
+			is = document.getElementById( "harden" );
+			is.onchange = updateMesh;
+			is = document.getElementById( "brick" );
 			is.onchange = updateMesh;
 			is = document.getElementById( "smoothShade" );
 			is.onchange = updateMesh;
