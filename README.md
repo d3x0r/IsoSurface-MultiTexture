@@ -46,7 +46,7 @@ The conditions and plane generation can also all be reversed, such that 0 is 'in
 
 Inspired from cells of diamond crystal lattice...
 
-![Diamond cubic lattice](https://en.wikipedia.org/wiki/Cubic_crystal_system#/media/File:Visualisation_diamond_cubic.svg)
+![Diamond cubic lattice] https://en.wikipedia.org/wiki/Cubic_crystal_system#/media/File:Visualisation_diamond_cubic.svg
 
 Instead of blank cells, I have alternating same-cells (the inside
 tetrahdron is rotated 90 degrees each time, so the edge deltas are computed
@@ -78,6 +78,6 @@ to just 1 if case , and its sub-cases...
 
 ## Inflation
 
-![inflation](src/MarchingTet-Scaling.png )
+![inflation](src/images/MarchingTet-Scaling.png )
 
 
