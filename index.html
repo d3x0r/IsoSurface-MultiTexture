@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<title>Isosurface Toolbox</title>
+		<title>Isosurface Texture Toolbox</title>
 		
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
 
-		<script src="./src/three.min.js"></script>
-		<script src="./src/TrackballControls.js"></script>
+		<script type="module" src="./src/customShaderLoader.js"></script>
+		<script src="./src/three.js/three.min.js"></script>
+		<!--script src="./src/TrackballControls.js"></script-->
 		<script src="./src/Detector.js"></script>
 		<script src="./src/Stats.js"></script>
 
@@ -15,7 +16,6 @@
 		<script src="./src/THREEx.WindowResize.js"></script>
 		<script src="./src/threex.dragpancontrols.js"></script>
 
-			<script type="module" src="./src/customShaderLoader.js"></script>
 	<!--Mesh algorithms-->
 	<script src="./src/marchingcubes.js"></script>
 	<script src="./src/marchingtetrahedra.js"></script>
@@ -36,7 +36,7 @@
 	<!-- info on screen display -->
 	<div id="info">
 		<div class="top">
-			Isosurface Algorithm Tester
+			Isosurface Texture Tester
 		</div>
 		<div class="bottom" id="inlineDoc">
 			- <i><a href="https://www.github.com/d3x0r/IsoSurface-MultiTexture">https://www.github.com/d3x0r/IsoSurface-MultiTexture</a></i>
