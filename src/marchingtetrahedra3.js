@@ -29,6 +29,8 @@
  *
  * Javascript by d3x0r
  */
+
+
 const debug_ = false;
 const zero_is_outside = true;
 

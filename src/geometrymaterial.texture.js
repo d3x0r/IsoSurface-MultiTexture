@@ -1,4 +1,4 @@
-import  "./three.min.js"
+import  "./three.js/three.min.js"
 
 THREE.GridGeometryMaterial = GeometryMaterial;
 function GeometryMaterial() {

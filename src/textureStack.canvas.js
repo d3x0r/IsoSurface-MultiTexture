@@ -1,6 +1,6 @@
 "use strict";
 
-import "./three.min.js";
+import "./three.js/three.min.js";
 
 // import {TextureStack} from "./textureStack.canvas.js"
 //

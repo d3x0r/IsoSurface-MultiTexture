@@ -1,5 +1,5 @@
 
-import "./three.min.js"
+import "./three.js/three.min.js"
 
 const attribs = ["position","uv"
 , "in_Color", "in_FaceColor", "in_Modulous"
