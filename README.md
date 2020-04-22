@@ -5,11 +5,7 @@
 ### Marching Tetrahdrons
 
 
-# Marching Diamond Crystal Lattice Detail
-
-
-![graphic Layout](tesslation-5tets.png)
-![Alternate notes, for plane meshing](tesselation-5tets-plane.png)
+![Multitexture exmaple](Yata-Multitexture-isosurface.png)
 
 See also
 
