@@ -1,12 +1,14 @@
 
-import  "./three.min.js"
+import  "./three.js/three.min.js"
+import "./three.js/TrackballControls.js"
+import "./three.js/gameMouse.js"  // adds mouse to voxel world controller
+import "./three.js/personalFill.js"  // adds pools, constants, and some matrix convenience methods
 
 import {Textures,on as TextureDone} from "./textureLoader.js"
 import {TextureStack} from "./textureStack.canvas.js"
 import {GeometryBuffer} from "./geometrybuffer.js"
 import {GeometryMaterial} from "./geometrymaterial.texture.js"
 
-import "./TrackballControls.js"
 
 const common = {
 	stack : null,
