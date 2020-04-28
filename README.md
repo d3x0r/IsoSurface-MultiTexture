@@ -9,12 +9,13 @@
 
 See also
 
-Testing framework : http://mikolalysenko.github.io/Isosurface/
+(this Demo) Testing framework: https://d3x0r.github.io/IsoSurface-MultiTexture
 
-https://github.com/mikolalysenko/isosurface.git
+Original Testing framework : http://mikolalysenko.github.io/Isosurface/  https://github.com/mikolalysenko/isosurface.git
 
-Prior Testing framework: https://d3x0r.github.io/MarchingTetrahedra/
-(this) Testing framework: https://github.com/d3x0r/IsoSurface-MultiTexture
+
+Prior Updated Testing framework: https://d3x0r.github.io/MarchingTetrahedra/
+
 
 see also https://en.wikipedia.org/wiki/Marching_tetrahedra
 
