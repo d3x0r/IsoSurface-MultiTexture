@@ -542,6 +542,7 @@ function meshCloud(data, dims) {
 					}
 					//if( useFace > 5 || useFace < 5 ) continue;
 					if( useFace-- ) {
+						bits[dataOffset] = 1; // set any 1 bit is set here.
 						const fpi = facePointIndexes[odd][tet][invert][useFace];
 						for( var tri=0;tri< fpi.length; tri++ ){
 							const ai = baseOffset+fpi[tri][0];
