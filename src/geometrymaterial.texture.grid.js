@@ -427,11 +427,11 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 
 			// depthScalar causes the grid lines to be 'thicker' in the distance...
                     depthScalar = 1.0/(zPosition.z+50.0)*50.0;
-                    depthScalar = depthScalar*depthScalar*depthScalar*depthScalar;
+                    depthScalar = depthScalar*depthScalar;//*depthScalar*depthScalar;
 
-			gridmod.x = pow( abs( gridmod.x ), ((7.0*depthScalar))*ex_Pow );
-			gridmod.y = pow( abs( gridmod.y ), ((7.0*depthScalar))*ex_Pow );
-			gridmod.z = pow( abs( gridmod.z ), ((7.0*depthScalar))*ex_Pow );
+			gridmod.x = (1.0-zzNormal.x*zzNormal.x) * pow( abs( gridmod.x ), ((7.0*depthScalar))*ex_Pow );
+			gridmod.y = (1.0-zzNormal.y*zzNormal.y) * pow( abs( gridmod.y ), ((7.0*depthScalar))*ex_Pow );
+			gridmod.z = (1.0-zzNormal.z*zzNormal.z) * pow( abs( gridmod.z ), ((7.0*depthScalar))*ex_Pow );
 
                     g = min(1.0,gridmod.x+gridmod.y+gridmod.z);
                     h = max((gridmod.x+gridmod.y+gridmod.z)-1.5,0.0)/3.0;
