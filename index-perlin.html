@@ -516,6 +516,7 @@
 			for(var id in testdata) {
 			  ds.add(new Option(id, id), null);
 			}
+			ds.selectedIndex = 3;
 			ds.onchange = updateMesh;
 			var ms = document.getElementById("mesher");
 			for(var alg in meshers) {

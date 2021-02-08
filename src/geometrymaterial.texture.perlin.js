@@ -463,7 +463,7 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
     	#include <dithering_fragment>
 
 		// update to include grid computation (no shine on virtual lines)
-		if( 1.0 > 0.0 )
+		if( 0.0 > 0.0 )
 
                     if( edge_only > 0.5 )
                          gl_FragColor += vec4( h* ( white.rgb - gl_FragColor.rgb )+ (g* edge.rgb), (g * edge.a) ) ;
