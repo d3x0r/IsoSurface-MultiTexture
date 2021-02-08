@@ -142,7 +142,7 @@ function GeometryMaterial() {
 
                 ex_use_texture = in_use_texture;
                 ex_flat_color = in_flat_color;
-                ex_Modulous = in_Modulous*3.0;
+                ex_Modulous = in_Modulous*1.0;
         }
 	v_types1 = types1;
 	v_types2 = types2;
@@ -417,6 +417,7 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
                 //}
                 //else
                 {
+			face.a = 0.2;
 			vec3 gridmod = mod( ex_Modulous/*+0.5*/, 1.0 ) - 0.5;
 
                     float g;
@@ -433,7 +434,9 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 			gridmod.y = (1.0-clamp( abs(zzNormal.y)*1.05, 0.0, 1.0 ) ) * pow( abs( gridmod.y ), ((7.0*depthScalar))*ex_Pow );
 			gridmod.z = (1.0-clamp( abs(zzNormal.z)*1.05, 0.0, 1.0 ) ) * pow( abs( gridmod.z ), ((7.0*depthScalar))*ex_Pow );
 
-                    g = min(1.0,gridmod.x+gridmod.y+gridmod.z);
+			         float gln = 1.0/sqrt(gridmod.z*gridmod.z+gridmod.y*gridmod.y+gridmod.x*gridmod.x);
+						//gridmod.xyz *= gln;
+                    g = min(1.0,(gridmod.x+gridmod.y+gridmod.z)*1.5);
                     h = max((gridmod.x+gridmod.y+gridmod.z)-1.5,0.0)/3.0;
                     //white = vec3(1.0,1.0,1.0) * max(edge.r,max(edge.g,edge.b));
 
