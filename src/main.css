@@ -1,3 +1,9 @@
+
+.controls { pointer-events: none; }
+input {pointer-events:all}
+button {pointer-events:all}
+select {pointer-events:all}
+
 body {
 	overflow	: hidden;
 	padding		: 0;
