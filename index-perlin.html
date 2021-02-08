@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
 
-		<script type="module" src="./src/customShaderLoader.js"></script>
+		<script type="module" src="./src/customShaderLoader-perlin.js"></script>
 		<script src="./src/three.js/three.min.js"></script>
 		<!--script src="./src/TrackballControls.js"></script-->
 		<script src="./src/Detector.js"></script>
@@ -70,11 +70,13 @@
 
 	<script type="module">
 	import {MarchingTetrahedra4} from "./src/marchingtetrahedra4.js"
+	import {MarchingTetrahedra4p} from "./src/marchingtetrahedra4-perlin.js"
 		var stats, scene, renderer, composer;
 		var camera, cameraControl;
 		var geometry, surfacemesh, wiremesh;
 		var meshers = {
-		    'Marching Tetraheda 4 (DCL-volume)' : MarchingTetrahedra4
+		    'Marching Tetraheda 4 (PERLIN)(DCL-volume)' : MarchingTetrahedra4p
+		  , 'Marching Tetraheda 4 (DCL-volume)' : MarchingTetrahedra4
 		  , 'Marching Tetraheda 3 (DCL-plane)' : MarchingTetrahedra3
 		//  , 'Marching Tetraheda 2 (DCL-cell)' : MarchingTetrahedra2
 		 // , 'Marching Cubes': MarchingCubes

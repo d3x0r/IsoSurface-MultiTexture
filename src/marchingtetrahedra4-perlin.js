@@ -85,6 +85,71 @@ this is the vertex references on the right, and which 'vert N' applies.
 
 */
 
+import {noise} from "./perlin-sphere.js";
+
+const noiseGen = noise( 0, {
+	patchSize : 128,
+	seed_noise : null,
+	gen_noise : null,
+	nodes : [],  // trace of A*Path
+	base : 0,
+	generations : 6,
+	seed : '' + Date.now(),
+	cache : [],  // pool used to cache perlin coordinates
+} )
+
+const BASE_COLOR_WHITE = [255,255,255,255];
+const BASE_COLOR_BLACK = [0,0,0,255];
+const BASE_COLOR_RED = [127,0,0,255];
+const BASE_COLOR_LIGHTBLUE = [0,0,255,255];
+const BASE_COLOR_LIGHTRED = [255,0,0,255];
+const BASE_COLOR_LIGHTGREEN = [0,255,0,255];
+
+function ColorAverage( a, b, i,m) {
+
+    var c = [ (((b[0]-a[0])*i/m) + a[0])|0,
+        (((b[1]-a[1])*i/m) + a[1])|0,
+        (((b[2]-a[2])*i/m) + a[2])|0,
+		(((b[3]-a[3])*i/m) + a[3])|0
+             ]
+    //c[3] -= c[1];
+    //console.log( "color: ", a, b, c, i, ((b[1]-a[1])*i/m)|0, a[1], ((b[1]-a[1])*i/m) + a[1] )
+    return c;//`#${(c[0]<16?"0":"")+c[0].toString(16)}${(c[1]<16?"0":"")+c[1].toString(16)}${(c[2]<16?"0":"")+c[2].toString(16)}`
+}
+
+				const c1r1 = 0.10;
+				const c1r2 = 0.36;
+				const c1r3 = 0.50;
+				const c1r4 = 0.63;
+				const c1r5 = 0.90;
+
+function getColor( here ) {
+	let c1;
+				{
+					if( here <= 0.10 )
+						c1 = ColorAverage( BASE_COLOR_WHITE,
+														 BASE_COLOR_BLACK, (here)/(c1r1) * 1000, 1000 );
+					else if( here <= 0.36 )
+						c1=ColorAverage( BASE_COLOR_BLACK,
+														 BASE_COLOR_LIGHTBLUE, (here-c1r1)/(c1r2-c1r1) * 1000, 1000 );
+					else if( here <= 0.5 )
+						c1=ColorAverage( BASE_COLOR_LIGHTBLUE,
+														 BASE_COLOR_LIGHTGREEN, (here-c1r2)/(c1r3-c1r2) * 1000, 1000 );
+					else if( here <= 0.63 )
+						c1=ColorAverage( BASE_COLOR_LIGHTGREEN,
+														 BASE_COLOR_LIGHTRED, (here-c1r3)/(c1r4-c1r3) * 1000, 1000 ) ;
+					else if( here <= 0.90 )
+						c1=ColorAverage( BASE_COLOR_LIGHTRED,
+														 BASE_COLOR_WHITE, (here-c1r4)/(c1r5-c1r4) * 1000, 1000 ) ;
+					else //if( here <= 4.0 / 4 )
+						c1=ColorAverage( BASE_COLOR_WHITE,
+														 BASE_COLOR_BLACK, (here-c1r5)/(1.0-c1r5) * 10000, 10000 );
+				}
+   
+   	return c1;
+}
+
+
 var MarchingTetrahedra4 = (function() {
 const debug_ = false;
 	// static working buffers
@@ -346,7 +411,7 @@ function meshCloud(data, dims) {
 
 					const data0=baseOffset+dataOffset[p0];
 					const data1=baseOffset+dataOffset[p1];
-	            let d,e;
+	            let d, e;
 					d=-data[data0]; e=-data[data1];
 	
 					if( ( d <= 0 && e >0  )|| (d > 0 && e <= 0 ) ){
@@ -369,9 +434,11 @@ function meshCloud(data, dims) {
 									pointOutputHolder[0] = cellOrigin[0]+ geom[p1][0]+( geom[p0][0]- geom[p1][0])* t;
 									pointOutputHolder[1] = cellOrigin[1]+ geom[p1][1]+( geom[p0][1]- geom[p1][1])* t;
 									pointOutputHolder[2] = cellOrigin[2]+ geom[p1][2]+( geom[p0][2]- geom[p1][2])* t;
+
+									const c = getColor( noiseGen.get2( pointOutputHolder[0]*2,pointOutputHolder[1]*2,pointOutputHolder[2]*2, 0 ) );
 									normal = opts.geometryHelper.addPoint( pointOutputHolder
 										 , null, null // texture, and uv[1,0] 
-										 , [0xA0,0x00,0xA0,255] // edge color
+										 , c//[0xA0,0x00,0xA0,255] // edge color
 										 , [0x11, 0x11, 0x11, 255] // face color
 										 , [0,0,0] // normal *needs to be updated*;
 										 , 100 // pow
@@ -414,9 +481,10 @@ function meshCloud(data, dims) {
 									pointOutputHolder[0] = cellOrigin[0]+ geom[p0][0]+( geom[p1][0]- geom[p0][0])* t;
 									pointOutputHolder[1] = cellOrigin[1]+ geom[p0][1]+( geom[p1][1]- geom[p0][1])* t;
 									pointOutputHolder[2] = cellOrigin[2]+ geom[p0][2]+( geom[p1][2]- geom[p0][2])* t;
+									const c = getColor( noiseGen.get2( pointOutputHolder[0]*2,pointOutputHolder[1]*2,pointOutputHolder[2]*2, 0 ) );
 									normal = opts.geometryHelper.addPoint( pointOutputHolder
 										 , null, null // texture, and uv[1,0] 
-										 , [0xA0,0x00,0xA0,255] // edge color
+										 , c//[0xA0,0x00,0xA0,255] // edge color
 										 , [0x11, 0x11, 0x11, 255] // face color
 										 , [0,0,0] // normal *needs to be updated*;
 										 , 100 // pow
@@ -823,9 +891,6 @@ function meshCloud(data, dims) {
 }
 })()
 
-if("undefined" != typeof exports) {
-	exports.mesher = MarchingTetrahedra4;
-}
 
+export {MarchingTetrahedra4 as MarchingTetrahedra4p};
 
-export {MarchingTetrahedra4 };
