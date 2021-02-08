@@ -100,10 +100,26 @@ const noiseGen = noise( 0, {
 
 const BASE_COLOR_WHITE = [255,255,255,255];
 const BASE_COLOR_BLACK = [0,0,0,255];
+const BASE_COLOR_DARK_BLUE = [0,0,132,255];
+const BASE_COLOR_MID_BLUE = [0x2A,0x4F,0xA8,255];
 const BASE_COLOR_RED = [127,0,0,255];
+const BASE_COLOR_LIGHT_TAN = [0xE2,0xB5,0x71,255];    //E2B571
+const BASE_COLOR_YELLOW = [255,255,0,255];
 const BASE_COLOR_LIGHTBLUE = [0,0,255,255];
+const BASE_COLOR_LIGHTCYAN = [0,192,192,255];
+const BASE_COLOR_DARK_BLUEGREEN = [0x06, 0x51, 0x42,255];
 const BASE_COLOR_LIGHTRED = [255,0,0,255];
 const BASE_COLOR_LIGHTGREEN = [0,255,0,255];
+const BASE_COLOR_DARK_GREEN = [0,93,0,255];
+const BASE_COLOR_DARK_BROWN = [0x54,0x33,0x1c,255];  //54331C
+
+
+//const RANGES = [BASE_COLOR_BLACK, BASE_COLOR_DARK_BLUE, BASE_COLOR_DARK_GREEN, BASE_COLOR_LIGHT_TAN, BASE_COLOR_DARK_BROWN, BASE_COLOR_WHITE, BASE_COLOR_BLACK ];
+//const RANGES_THRESH = [0, 0.01, 0.25, 0.50, 0.75, 0.99, 1.0 ];
+
+const RANGES = [BASE_COLOR_BLACK, BASE_COLOR_DARK_BLUE, BASE_COLOR_MID_BLUE, BASE_COLOR_LIGHT_TAN, BASE_COLOR_DARK_GREEN, BASE_COLOR_LIGHT_TAN, BASE_COLOR_DARK_BROWN, BASE_COLOR_WHITE, BASE_COLOR_BLACK ];
+const RANGES_THRESH = [0, 0.25, 0.37, 0.44, 0.58, 0.67, 0.82, 0.99, 1.0 ];
+
 
 function ColorAverage( a, b, i,m) {
 
@@ -125,6 +141,13 @@ function ColorAverage( a, b, i,m) {
 
 function getColor( here ) {
 	let c1;
+	for( var r = 1; r < RANGES_THRESH.length; r++ ) {
+			if( here <= RANGES_THRESH[r] ) {
+				//plot( w, h, ColorAverage( RANGES[r-1], RANGES[r+0], (here-RANGES_THRESH[r-1])/(RANGES_THRESH[r+0]-RANGES_THRESH[r-1]) * 1000, 1000 ) );
+				return ColorAverage( RANGES[r-1], RANGES[r+0], (here-RANGES_THRESH[r-1])/(RANGES_THRESH[r+0]-RANGES_THRESH[r-1]) * 1000, 1000 );
+				break;
+			}
+	}
 				{
 					if( here <= 0.10 )
 						c1 = ColorAverage( BASE_COLOR_WHITE,
