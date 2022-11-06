@@ -1,7 +1,10 @@
 
 import {SaltyRNG} from "./salty_random_generator.js"
+import {SFC32} from "./prng_short.mjs"
 
-const generate_3D = true;
+const smallRNG = SFC32( "My Default Seed" );
+
+const generate_3D = false;
 //-------------------------
 // Usage : import {noise} from "./perlin-min.js"
 //  var noise = new noise( config )
@@ -18,7 +21,7 @@ var example_config = {
 }
 
 const CUBE_ELEMENT_SIZE = 32 // x by y plane if not _3D else also by z
-
+let data = null;
 
 
 function noise( opts ) {
@@ -66,25 +69,40 @@ function noise( opts ) {
 		//gen.scalar *= 1;
 		maxtot += gen.scalar;
 	}
-	console.log( "tot:", maxtot );
+	//console.log( "tot:", maxtot );
 	var seeds = [];
 
-	var data;
-	const RNG = SaltyRNG( arr=>arr.push( data ), {mode:1} );
+//	var data;
+//	const RNG = SaltyRNG( arr=>arr.push( data ), {mode:1} );
 
 	function myRandom() {
 		var arr = [];
-		RNG.reset();
+		let shortRNG;
 		if( opts.seed_noise ) {
-			RNG.feed( opts.seed_noise );
+			//console.log( "noise:", opts.seed_noise, data );
+			shortRNG = SFC32( opts.seed_noise +data )
+		} else if( data )
+			shortRNG = SFC32( data )
+		else
+			shortRNG = SFC32( "My Default Seed" )
+//		RNG.reset();
+//		if( opts.seed_noise ) {
+//			RNG.feed( opts.seed_noise );
+//		}
+
+		//var rand = new Uint8Array(RNG.getBuffer( 8*CUBE_ELEMENT_SIZE*CUBE_ELEMENT_SIZE*(generate_3D?CUBE_ELEMENT_SIZE:1)));
+		var rand = new Array( CUBE_ELEMENT_SIZE*CUBE_ELEMENT_SIZE*(generate_3D?CUBE_ELEMENT_SIZE:1));
+		for( let aa = 0; aa < CUBE_ELEMENT_SIZE; aa++ ) {
+			for( let bb = 0; bb < CUBE_ELEMENT_SIZE; bb++ ) {
+				rand[aa*CUBE_ELEMENT_SIZE + bb] = shortRNG();
+			}
 		}
-		var rand = new Uint8Array(RNG.getBuffer( 8*CUBE_ELEMENT_SIZE*CUBE_ELEMENT_SIZE*(generate_3D?CUBE_ELEMENT_SIZE:1)));
 		var n = 0;
 		//console.log( "Data wil lbe:", data );
 		for( var nz = 0; nz< (generate_3D?CUBE_ELEMENT_SIZE:1); nz++ ) 
 		for( var ny = 0; ny < CUBE_ELEMENT_SIZE; ny++ ) 
 		for( var nx = 0; nx < CUBE_ELEMENT_SIZE; nx++ )  {
-			var val = rand[n++]/255;//RNG.getBits( 8, false ) / 255; // 0 < 1 
+			var val = rand[n++];//rand[n++]/255;//RNG.getBits( 8, false ) / 255; // 0 < 1 
 			arr.push( val );
 		}
 		return { id:data, when : 0, next : null, arr: arr, sx:0, sy:0, sz:0 };

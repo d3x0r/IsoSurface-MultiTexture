@@ -51,7 +51,9 @@ function offscreenSurface() {
 			pointBuffer[2] = output[output_offset+2];
 			pointBuffer[3] = output[output_offset+3];
 	if( pointBuffer[0] < 0 || pointBuffer[1] < 0 || pointBuffer[2] < 0 ) debugger;
-if( logs-- > 0 ) { logs2 = 2; console.log( "Read:", output_offset, pointBuffer ); }
+
+	//if( logs-- > 0 ) { logs2 = 2; console.log( "Read:", output_offset, pointBuffer ); }
+
 			return pointBuffer;
 		},
 		smudge() {
@@ -83,7 +85,7 @@ function ColorAverage( a, b, i,m) {
 
     function plot(d) { 
 		//console.log( "output at", output_offset, d )
-if( logs2-- > 0 ) console.log( "write:", output_offset, d );
+//if( logs2-- > 0 ) console.log( "write:", output_offset, d );
 if( d[0] < 0 || d[1] < 0 || d[2] < 0 ) debugger;
         output[output_offset+0] = d[0]; 
         output[output_offset+1] = d[1]; 
