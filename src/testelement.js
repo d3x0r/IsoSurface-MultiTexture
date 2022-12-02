@@ -158,6 +158,14 @@ function createTestElementData() {
 			return Math.sin(x) + Math.sin(y) + Math.sin(z);
 		}
 	);
+	result['Sine^2 Waves'] = makeVolume(
+		[[-Math.PI*0.75, Math.PI*0.75, Math.PI/32],
+		 [-Math.PI*0.75, Math.PI*0.75, Math.PI/32],
+		 [-Math.PI*0.75, Math.PI*0.75, Math.PI/32]],
+		function(x,y,z) {
+			return Math.sin(x)*Math.sin(x) + Math.sin(y)*Math.sin(y) + Math.sin(z)*Math.sin(z)+2;
+		}
+	);
 	
 	result['Perlin Noise'] = makeVolume(
 		[[-5, 5, 0.25],

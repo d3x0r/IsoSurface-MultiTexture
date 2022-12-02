@@ -171,6 +171,24 @@ function createTestData() {
 		}
 	);
 	
+	result['Sine^2 Waves'] = makeVolume(
+		[[-Math.PI*0.75, Math.PI*0.75, Math.PI/32],
+		 [-Math.PI*0.75, Math.PI*0.75, Math.PI/32],
+		 [-Math.PI*0.75, Math.PI*0.75, Math.PI/32]],
+		function(x,y,z) {
+			return Math.abs(x)+Math.abs(y)+Math.abs(z)-1;
+			const l = Math.sqrt(x*x+y*y+z+z);
+			const X = x/l;
+			const Y = y/l;
+			const Z = z/l;
+			const X2 = Math.sin(x);
+			const Y2 = Math.sin(y);
+			const Z2 = Math.sin(z);
+			
+			//return Math.sin(x)*Math.sin(x) + Math.sin(y)*Math.sin(y) + Math.sin(z)*Math.sin(z)-1;
+		}
+	);
+	
 	result['Perlin Noise'] = makeVolume(
 		[[-5, 5, 0.25],
 		 [-5, 5, 0.25],
