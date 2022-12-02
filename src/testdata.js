@@ -176,6 +176,7 @@ function createTestData() {
 		 [-Math.PI*0.75, Math.PI*0.75, Math.PI/32],
 		 [-Math.PI*0.75, Math.PI*0.75, Math.PI/32]],
 		function(x,y,z) {
+                    /*
 			return Math.abs(x)+Math.abs(y)+Math.abs(z)-1;
 			const l = Math.sqrt(x*x+y*y+z+z);
 			const X = x/l;
@@ -184,8 +185,8 @@ function createTestData() {
 			const X2 = Math.sin(x);
 			const Y2 = Math.sin(y);
 			const Z2 = Math.sin(z);
-			
-			//return Math.sin(x)*Math.sin(x) + Math.sin(y)*Math.sin(y) + Math.sin(z)*Math.sin(z)-1;
+		     */
+			return Math.sin(x)*Math.sin(x) + Math.sin(y)*Math.sin(y) + Math.sin(z)*Math.sin(z)-1;
 		}
 	);
 	
