@@ -332,17 +332,17 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 				material.uniforms.enableAberration.value = chkAberration.checked?1:0;
 				material.uniforms.enableContract.value = chkContract.checked?1:0;
 				if( chkLockVelocity.checked ) {
-					material.uniforms.velocity1.value.x = Number( sldVelocity1.value )/100;
-					material.uniforms.velocity2.value.x = Number( sldVelocity1.value )/100;
+					material.uniforms.velocity1.value.x = Number( sldVelocity1.value )/100/5;
+					material.uniforms.velocity2.value.x = Number( sldVelocity1.value )/100/5;
 				} else {
-					material.uniforms.velocity1.value.x = Number( sldVelocity1.value )/100;
-					material.uniforms.velocity2.value.x = Number( sldVelocity2.value )/100;
+					material.uniforms.velocity1.value.x = Number( sldVelocity1.value )/100/5;
+					material.uniforms.velocity2.value.x = Number( sldVelocity2.value )/100/5;
 				}
 
 				material.uniforms.textureMap3.value = window.ttCommon.stack.smudge();
 				material.uniforms.cursorIconTex.value = window.ttCommon.cursorIcon;
 				material.defines.CALCULATE_COSINE_MERGE = document.getElementById( "sharpenTransition" ).checked?1:0;
-          			material.uniforms.cursorIconUp.value.set( 0, 0, 1 ); // this should update to the camera up 
+       			material.uniforms.cursorIconUp.value.set( 0, 0, 1 ); // this should update to the camera up 
 
 				surfacemesh	= new THREE.Mesh( geometry, material );
 				//cluster.THREE_solid.add( sector.THREE_solid = new THREE.Mesh( sector.solid_geometry.geometry, geometryShader ) );
@@ -433,8 +433,8 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 			scene = new THREE.Scene();
 
 			// put a camera in the scene
-//			camera	= new THREE.PerspectiveCamera(12, window.innerWidth / window.innerHeight, 1, 10000 );
-			camera	= new THREE.OrthographicCamera(-50,50,-50,50,-50,50 );
+			camera	= new THREE.PerspectiveCamera(12, window.innerWidth / window.innerHeight, 1, 10000 );
+//			camera	= new THREE.OrthographicCamera(-50,50,-50,50,-50,50 );
 				//myPerspective( camera.projectionMatrix, 90, window.innerWidth / window.innerHeight, 0.01, 10000 );
 			camera.position.set(0, 0, 40);
 			scene.add(camera);
@@ -541,6 +541,8 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 			if( sldVelocity2 ) sldVelocity2.oninput = updateMesh;
 			if( chkLockVelocity ) chkLockVelocity.oninput = updateMesh;
 			if( chkLorentz ) chkLorentz.oninput = updateMesh;
+			if( chkContract ) chkContract.oninput = updateMesh;
+
 			if( chkAberration ) chkAberration.oninput = updateMesh;
 
 			is = document.getElementById( "inflation" );

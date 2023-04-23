@@ -115,7 +115,7 @@ function GeometryMaterial() {
     uniform int enableAberration;
     uniform int enableLorentz;
     uniform int enableContract;
-    const float C=1.0;
+    const float C=0.2;
 
     vec3 aberration( vec3 X, vec3 Vo, vec3 Xo ){
 
@@ -226,6 +226,7 @@ function GeometryMaterial() {
 		//float g1= g0*g0;
 		if( enableContract > 0 )
         startPos = startPos - realVel*(dot( startPos,realVel)*g1) ;
+
         T=0.0;
         if( enableLorentz > 0 ) {
 
@@ -267,6 +268,10 @@ function GeometryMaterial() {
         {
                 ex_texCoord = uv;
                 ex_Color = in_Color;
+
+        ex_Color.rgb = hsv2rgb(vec3(mod(-T,100.0)/100.0+0.3,1.0,1.0));
+			ex_Color.a = 1.0;
+
                 ex_FaceColor = in_FaceColor;
 
                 ex_Pow = in_Pow;
@@ -445,6 +450,7 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 			float tmp;
 
 		tmp = v_types1.y;
+/*
 		if( tmp == 0.0 ) 
 			edge.rgb = vec3( 0.0, 0.7, 0.7 );
 		else if( tmp == 1.0 ) 
@@ -459,7 +465,7 @@ void IntersectLineWithPlane( vec3 Slope, vec3 Origin,  // line m, b
 			edge.rgb = vec3( 0.0, 0.5, 5.0 );
 		else if( tmp == 6.0 ) 
 			edge.rgb = vec3( 0.5, 0.5, 0.5 );
-
+*/
 
 			float index;
 
