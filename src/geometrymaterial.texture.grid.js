@@ -33,7 +33,8 @@ function GeometryMaterial() {
         enableContract : { value : 0 },
 
         velocity1 : { value: new THREE.Vector3(0,0,0) },
-        velocity2 : { value: new THREE.Vector3(0,0,0) }		
+        velocity2 : { value: new THREE.Vector3(0,0,0) },
+			opos : {value: new THREE.Vector3(0,0,0) },
 
         }
     ] ),
@@ -112,10 +113,11 @@ function GeometryMaterial() {
     uniform float time;
     uniform vec3 velocity1;
     uniform vec3 velocity2;
+    uniform vec3 opos;
     uniform int enableAberration;
     uniform int enableLorentz;
     uniform int enableContract;
-    const float C=0.2;
+    const float C=1.0;
 
     vec3 aberration( vec3 X, vec3 Vo, vec3 Xo ){
 
@@ -215,42 +217,47 @@ function GeometryMaterial() {
         #include <displacementmap_vertex>
 
         mat3 rotmat = mat3( modelViewMatrix );
-        vec3 realVel = (rotmat * (velocity2+ velocity1)/2.0 );
-        vec3 startPos = (modelViewMatrix * vec4( position, 1.0 )).xyz;
-		float g1= (1.0-sqrt(1.0-velocity1.x/(2.0-velocity1.x))); // goodish (best)
+        vec3 realVel = ( (velocity2+ velocity1)/2.0 );
+        vec3 realVel1 = ( (velocity1) );
+        vec3 startPos = position;
+			vec3 originPos = opos;
+			startPos -=  originPos;
+		float g1= (1.0-sqrt(1.0*C-velocity1.x/(2.0*C-velocity1.x))); // goodish (best)
 		//float g1= 1.0-sqrt(1.0-velocity1.x*velocity1.x);  // also goodish
 		//float g1= sqrt( 1.0-(velocity1.x-1.0)*(velocity1.x-1.0) ); // bad (contracts too much. (forward circle)
 		//float g1= sqrt(1.0-sqrt(1.0-velocity1.x*velocity1.x)); // 
 		//float g1= velocity1.x; // bad (contracts too much at high V)
 		//float g1= (1.0-(1.0-velocity1.x/(2.0-velocity1.x))); //bad(contracts too much at high V)
 		//float g1= g0*g0;
-		if( enableContract > 0 )
-        startPos = startPos - realVel*(dot( startPos,realVel)*g1) ;
-
+		if( enableContract > 0 ){
+        startPos = startPos - realVel*(dot( startPos,realVel1)*g1) ;
+}
+//	startPos.x += 10.0 * velocity2.x;
+	
         T=0.0;
         if( enableLorentz > 0 ) {
 
             // move position to real position, camera is then at (0,0,0)
-            vec3 realVel2 = (rotmat *  velocity2 );
+            vec3 realVel2 = ( velocity2 );
             vec3 delpos = startPos;
             vec3 tmp = delpos - realVel2*time;
             float A = time*time*C*C - dot(tmp,tmp);
-            float B = time*C*C + dot(realVel, tmp );
-            float D = C*C-dot(realVel,realVel);
+            float B = time*C*C + dot(realVel1, tmp );
+            float D = C*C-dot(realVel1,realVel1);
             if( abs(D) < 0.00000001 ) T = B/(2.0*A);
             else T = (sqrt( B*B - D*A ) + B)/D;
-            vec3 real_position = startPos + T*realVel;
+            vec3 real_position = startPos + T*realVel1;
             //vec3 real_position = startPos;
-            //gl_Position = projectionMatrix * vec4( real_position, 1.0 );
-            vec3 abb_pos = aberration( real_position, -realVel2, vec3(0) );
-            gl_Position = projectionMatrix * vec4( abb_pos, 1.0 );
+            //gl_Position = projectionMatrix * modelViewMatrix * vec4( real_position, 1.0 );
+            vec3 abb_pos = aberration( real_position, -realVel2, vec3(0) )+ originPos;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( abb_pos, 1.0 );
 	        vViewPosition = -abb_pos.xyz;
         } else if( enableAberration > 0 ) {
             mat3 rotmat = mat3( modelViewMatrix );
             vec3 realVel2 = (rotmat *  velocity2 );
 
-            vec3 abb_pos = aberration( startPos, -realVel2, vec3(0) );
-            gl_Position = projectionMatrix * vec4( abb_pos, 1.0 );
+            vec3 abb_pos = aberration( startPos, -realVel2, vec3(0) ) + originPos ;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( abb_pos, 1.0 ) ;
 	        vViewPosition = -abb_pos.xyz;
         } else {
             #include <project_vertex>

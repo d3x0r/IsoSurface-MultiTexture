@@ -67,6 +67,11 @@
 		  <label>Lock Velocity <input type="checkbox"  id="chkLockVelocity" checked="checked"></label>
 		 - <label>Velocity 1<input type="range" id="sldVelocity1" value="50"></label>
 		 - <label>Velocity 2<input type="range" id="sldVelocity2" value="50"></label>
+			<br>
+		 - <label>X<input type="range" id="sldPosX" value="50"></label>
+		 - <label>Y<input type="range" id="sldPosY" value="50"></label>
+		 - <label>Z<input type="range" id="sldPosZ" value="50"></label>
+
 			</p>
 
 	  </div>
@@ -77,7 +82,7 @@
 import {myPerspective} from './src/three.js/my_perspective.js'
 	import {MarchingTetrahedra4} from "./src/marchingtetrahedra4.js"
 		var stats, scene, renderer, composer;
-		var camera, cameraControls;
+		var camera, camera2, cameraControls;
 		var geometry, surfacemesh, wiremesh;
 		var meshers = {
 		    'Marching Tetraheda 4 (DCL-plane)' : MarchingTetrahedra4
@@ -331,12 +336,15 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 				material.uniforms.enableLorentz.value = chkLorentz.checked?1:0;
 				material.uniforms.enableAberration.value = chkAberration.checked?1:0;
 				material.uniforms.enableContract.value = chkContract.checked?1:0;
+					material.uniforms.opos.value.x = (Number( sldPosX.value )-50)/2;
+					material.uniforms.opos.value.y = (Number( sldPosY.value )-50)/2;
+					material.uniforms.opos.value.z = (Number( sldPosZ.value )-50)/2;
 				if( chkLockVelocity.checked ) {
-					material.uniforms.velocity1.value.x = Number( sldVelocity1.value )/100/5;
-					material.uniforms.velocity2.value.x = Number( sldVelocity1.value )/100/5;
+					material.uniforms.velocity1.value.x = Number( sldVelocity1.value )/100;
+					material.uniforms.velocity2.value.x = Number( sldVelocity1.value )/100;
 				} else {
-					material.uniforms.velocity1.value.x = Number( sldVelocity1.value )/100/5;
-					material.uniforms.velocity2.value.x = Number( sldVelocity2.value )/100/5;
+					material.uniforms.velocity1.value.x = Number( sldVelocity1.value )/100;
+					material.uniforms.velocity2.value.x = Number( sldVelocity2.value )/100;
 				}
 
 				material.uniforms.textureMap3.value = window.ttCommon.stack.smudge();
@@ -434,10 +442,12 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 
 			// put a camera in the scene
 			camera	= new THREE.PerspectiveCamera(12, window.innerWidth / window.innerHeight, 1, 10000 );
-//			camera	= new THREE.OrthographicCamera(-50,50,-50,50,-50,50 );
+			camera2	= new THREE.OrthographicCamera(-5,5,-5,5,-100,100 );
+			camera2.autoUpdateMatrix = false;
 				//myPerspective( camera.projectionMatrix, 90, window.innerWidth / window.innerHeight, 0.01, 10000 );
 			camera.position.set(0, 0, 40);
 			scene.add(camera);
+			scene.add(camera2);
 
 			// create a camera contol
 			cameraControls	= new THREE.TrackballControls( camera, document.getElementById('container') )
@@ -537,6 +547,9 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 			document.getElementById("showedges").checked  = false;
 
 			var is;
+			if( sldPosX ) sldPosX.oninput = updateMesh;
+			if( sldPosY ) sldPosY.oninput = updateMesh;
+			if( sldPosZ ) sldPosZ.oninput = updateMesh;
 			if( sldVelocity1 ) sldVelocity1.oninput = updateMesh;
 			if( sldVelocity2 ) sldVelocity2.oninput = updateMesh;
 			if( chkLockVelocity ) chkLockVelocity.oninput = updateMesh;
@@ -619,8 +632,21 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 
 	  surfacemesh.visible = document.getElementById("showfacets").checked;
 	  wiremesh.visible = document.getElementById("showedges").checked;
-
+/*
 			// actually render the scene
+		camera.updateMatrixWorld(true);
+		camera2.matrix.copy( camera.matrix );
+		camera2.matrixWorld.copy( camera.matrixWorld );
+{
+var d = new THREE.Vector3(),
+    q = new THREE.Quaternion(),
+    s = new THREE.Vector3();
+camera2.matrixWorld.decompose( d, q, s );
+camera2.position.copy( d );
+camera2.quaternion.copy( q );
+camera2.scale.copy( s );
+}
+*/
 			renderer.render( scene, camera );
 		}
 	</script>
