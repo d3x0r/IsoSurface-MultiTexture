@@ -222,7 +222,9 @@ function GeometryMaterial() {
         vec3 startPos = position;
 			vec3 originPos = opos;
 			startPos -=  originPos;
-		float g1= (1.0-sqrt(1.0*C-velocity1.x/(2.0*C-velocity1.x))); // goodish (best)
+		float speed1 = length(velocity1);
+		float g1 = sqrt(C*C-speed1*speed1)/(C); // cc-vv/cc * c/sqrt(cc-vv) time-accurate [parabola]
+		//float g1= (1.0-sqrt(1.0*C-velocity1.x/(2.0*C-velocity1.x))); // goodish (best)
 		//float g1= 1.0-sqrt(1.0-velocity1.x*velocity1.x);  // also goodish
 		//float g1= sqrt( 1.0-(velocity1.x-1.0)*(velocity1.x-1.0) ); // bad (contracts too much. (forward circle)
 		//float g1= sqrt(1.0-sqrt(1.0-velocity1.x*velocity1.x)); // 
@@ -230,7 +232,9 @@ function GeometryMaterial() {
 		//float g1= (1.0-(1.0-velocity1.x/(2.0-velocity1.x))); //bad(contracts too much at high V)
 		//float g1= g0*g0;
 		if( enableContract > 0 ){
-        startPos = startPos - realVel*(dot( startPos,realVel1)*g1) ;
+			vec3 posDir = realVel * dot(startPos,realVel);
+        startPos = ( startPos - posDir) + posDir*g1;
+        //startPos = startPos - realVel*(dot( startPos,realVel1)*g1) ;
 }
 //	startPos.x += 10.0 * velocity2.x;
 	
