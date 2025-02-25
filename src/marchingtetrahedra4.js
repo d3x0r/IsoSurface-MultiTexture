@@ -290,7 +290,6 @@ const debug_ = false;
 
 
 	return meshCloud;
-	return null;
 
 
 function meshCloud() {

@@ -84,6 +84,11 @@
 		var testdata = {};
 		var testelements = {};
 		var material	= null;
+		let refreshMesh = null;
+		let priorMesher = null;
+		let priorField = null;
+	  let opts;
+		let dataBuffer = null;
 
 		function updateMesh() {
 
@@ -92,20 +97,21 @@
 
 	  //Create surface mesh
 			if( document.getElementById( "showGrid").checked) {
-				var geometryHelper = THREE.GridGeometryBuffer();
+				var geometryHelper = opts?.geometryHelper || THREE.GridGeometryBuffer();
 				geometry = geometryHelper.geometry;
+				geometryHelper.clear();
 			}else {
 				geometry	= new THREE.Geometry();
 				geometry.vertices.length = 0;
 				geometry.faces.length = 0;
 			}
 
+
 		  var mesher = meshers[ document.getElementById("mesher").value ]
 		var field  = testdata[ document.getElementById("datasource").value ]( document.getElementById("fillOutside").checked?-1
 			          :document.getElementById("fillInside").checked?1
 			          :0
 			 )
-
 		var fieldElements  = testelements[ document.getElementById("datasource").value ]( field, document.getElementById("fillOutside").checked?-1
 			          :document.getElementById("fillInside").checked?1
 			          :0 );
@@ -126,7 +132,9 @@
 			let brick = document.getElementById( "brick" ).checked;
 
 			let n = 0;
-			var newData = [];
+			var newData = dataBuffer || [];
+			if( !dataBuffer ) dataBuffer = newData;
+			dataBuffer.length = 0;
 			for( var z = 0; z < field.dims[2]; z++ ) {
 				for( var y = 0; y < field.dims[1]; y++ ) {
 					for( var x = 0; x < field.dims[0]; x++ ) {
@@ -163,8 +171,36 @@
 				}
 			}
 
-	  var opts;
-	  var result = mesher( newData, field.dims, opts = {
+		let result;
+		if( opts && priorMesher === mesher ){
+			 opts.showGrid = document.getElementById( "showGrid").checked;
+		  opts.minimize = minimize,
+		  opts.maximize = maximize,
+		  opts.inflation = inflatVal;
+		  opts.vertices = geometry.vertices;
+		  opts.faces = geometry.faces;
+		  opts.smoothShade = document.getElementById( "smoothShade" ).checked;
+		  opts.showGrid = document.getElementById( "showGrid").checked;
+		}
+
+		if( priorMesher !== mesher )
+			if( document.getElementById( "showGrid").checked) {
+				geometryHelper =   THREE.GridGeometryBuffer();
+				//opts.geometryHelper = geometryHelper;
+				geometry = geometryHelper.geometry;
+//				geometryHelper.clear();
+			}else {
+				geometry	= new THREE.Geometry();
+				geometry.vertices.length = 0;
+				geometry.faces.length = 0;
+			}
+
+
+
+		if( priorMesher === mesher && ( field === priorField ) )
+			result = refreshMesh();
+		else {
+		   result = mesher( newData, field.dims, opts = {
                   elements : fieldElements,
 		  minimize : document.getElementById( "minimize" ).checked,
 		  maximize : document.getElementById( "maximize" ).checked,
@@ -174,7 +210,27 @@
 		  smoothShade : document.getElementById( "smoothShade" ).checked,
 		  showGrid : document.getElementById( "showGrid").checked,
 		  geometryHelper : geometryHelper,
+			addPoint( p, type1, type2, typeDelta ) {
+
+					return opts.geometryHelper.addPoint( p
+						 , null, null // texture, and uv[1,0] 
+						 , [0xA0,0x00,0xA0,255] // edge color
+						 , [0x11, 0x11, 0x11, 255] // face color
+						 , [0,0,0] // normal *needs to be updated*;
+						 , 100 // pow
+						 , false // use texture
+						 , false // flat
+						 , false // decal texture?
+						 , p  // modulous of this point.
+						 , type1, type2, typeDelta, false )
+			}
 		} );
+		if( result !== null ) {
+			refreshMesh = result;
+			result = result();
+		}
+		}
+			priorMesher = mesher; priorField = field;
 	  var end = (new Date()).getTime();
 
 	  //Update statistics
@@ -297,8 +353,10 @@
 		  document.getElementById("facecount").value = geometry.faces.length;
 		}
 		else {
+			if( geometryHelper ) {
 			document.getElementById("vertcount").value = geometryHelper.used;
 		  	document.getElementById("facecount").value = geometryHelper.usedFaces/3;
+				}
 
 		}
 		  /*

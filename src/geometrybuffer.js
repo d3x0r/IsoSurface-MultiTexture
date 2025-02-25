@@ -172,6 +172,7 @@ function GeometryBuffer() {
 		this.simplex[p*3+0] = bc[0];
 		this.simplex[p*3+1] = bc[1];
 		this.simplex[p*3+2] = bc[2];
+      		if( t ) {	
 
 		this.types1[p*3+0] = t[0];//this.type1[p];
 		this.types1[p*3+1] = t[1];//this.type2[p];
@@ -182,6 +183,7 @@ function GeometryBuffer() {
 		this.typeDelta[p*3+0] = td[0];//this.typeDelta[p];
 		this.typeDelta[p*3+1] = td[1];//this.typeDelta[p];
 		this.typeDelta[p*3+2] = td[2];//this.typeDelta[p];
+		}	
 
 		return p; // first 'copy' doesn't need to be copied.
 	}
@@ -195,7 +197,8 @@ function GeometryBuffer() {
 		this.simplex[p*3+0] = bc[0];
 		this.simplex[p*3+1] = bc[1];
 		this.simplex[p*3+2] = bc[2];
-	
+
+		if( t ) {	
 		this.types1[p*3+0] = t[0];//this.type1[p];
 		this.types1[p*3+1] = t[1];//this.type2[p];
 		this.types1[p*3+2] = t[2];//this.type1[p];
@@ -206,6 +209,7 @@ function GeometryBuffer() {
 		this.typeDelta[p*3+0] = td[0];//this.typeDelta[p];
 		this.typeDelta[p*3+1] = td[1];//this.typeDelta[p];
 		this.typeDelta[p*3+2] = td[2];//this.typeDelta[p];
+		}
 		return p; // first 'copy' doesn't need to be copied.
 	}
         if( this.used >= this.available )
@@ -248,6 +252,7 @@ function GeometryBuffer() {
 		this.simplex[u3+2] = bc[2];
 	
 
+		if( t ) {	
 		this.types1[u3+0] = t[0];//this.type1[p];
 		this.types1[u3+1] = t[1];//this.type2[p];
 		this.types1[u3+2] = t[2];//this.type2[p];
@@ -258,6 +263,7 @@ function GeometryBuffer() {
 		this.typeDelta[u3+0] = td[0];//this.typeDelta[p];
 		this.typeDelta[u3+1] = td[1];//this.typeDelta[p];
 		this.typeDelta[u3+2] = td[2];//this.typeDelta[p];
+		}
 	}
        this.in_Pow[ this.used ]            = this.in_Pow[ p ]           ;
        this.in_use_texture[ this.used ]    = this.in_use_texture[ p ]   ;

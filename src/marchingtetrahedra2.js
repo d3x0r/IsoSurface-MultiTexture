@@ -578,7 +578,10 @@ var MarchingTetrahedra2 = (function () {
 
 		}
 
-
+		return meshCloud;
+		function meshCloud() {
+		vertices.length = 0;
+		faces.length = 0;
 		var values = [[-1, -1, -1, -1], [-1, -1, -1, -1]];
 		for (var x = -1; x < dims[0]; x++) {
 			cellOrigin[0] = x;
@@ -620,11 +623,12 @@ var MarchingTetrahedra2 = (function () {
 				}
 			}
 		}
-
-
-
-
 		return { vertices: vertices, faces: faces };
+		}
+
+
+
+
 	}
 })();
 
