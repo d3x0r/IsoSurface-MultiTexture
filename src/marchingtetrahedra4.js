@@ -197,11 +197,7 @@ const debug_ = false;
 	var newData = [];
 	const showGrid = opts.showGrid;
 
-	meshCloud( data,dims );
-	return null;
 
-
-function meshCloud(data, dims) {
 
 	// values input to this are in 2 planes for lower and upper values
 	const dim0 = dims[0];
@@ -290,6 +286,15 @@ function meshCloud(data, dims) {
 	const pointMerge  = pointMergeHolder[0];
 	const normals = normalHolder[0];
 	const crosses = crossHolder[0];
+
+
+
+	return meshCloud;
+	return null;
+
+
+function meshCloud() {
+
 	for( let zero = 0; zero < dim0*dim1*dim2; zero++ ) {
 		pointMerge[zero] = null;
 		// make sure to reset this... 
@@ -369,16 +374,7 @@ function meshCloud(data, dims) {
 									pointOutputHolder[0] = cellOrigin[0]+ geom[p1][0]+( geom[p0][0]- geom[p1][0])* t;
 									pointOutputHolder[1] = cellOrigin[1]+ geom[p1][1]+( geom[p0][1]- geom[p1][1])* t;
 									pointOutputHolder[2] = cellOrigin[2]+ geom[p1][2]+( geom[p0][2]- geom[p1][2])* t;
-									normal = opts.geometryHelper.addPoint( pointOutputHolder
-										 , null, null // texture, and uv[1,0] 
-										 , [0xA0,0x00,0xA0,255] // edge color
-										 , [0x11, 0x11, 0x11, 255] // face color
-										 , [0,0,0] // normal *needs to be updated*;
-										 , 100 // pow
-										 , false // use texture
-										 , false // flat
-										 , false // decal texture?
-										 , pointOutputHolder  // modulous of this point.
+									normal = opts.addPoint( pointOutputHolder
 										 , data0*10+elements.data[data0], data1*10+elements.data[data1], t, false
 									);
 									if( t < 0.00001 )  {
@@ -414,16 +410,7 @@ function meshCloud(data, dims) {
 									pointOutputHolder[0] = cellOrigin[0]+ geom[p0][0]+( geom[p1][0]- geom[p0][0])* t;
 									pointOutputHolder[1] = cellOrigin[1]+ geom[p0][1]+( geom[p1][1]- geom[p0][1])* t;
 									pointOutputHolder[2] = cellOrigin[2]+ geom[p0][2]+( geom[p1][2]- geom[p0][2])* t;
-									normal = opts.geometryHelper.addPoint( pointOutputHolder
-										 , null, null // texture, and uv[1,0] 
-										 , [0xA0,0x00,0xA0,255] // edge color
-										 , [0x11, 0x11, 0x11, 255] // face color
-										 , [0,0,0] // normal *needs to be updated*;
-										 , 100 // pow
-										 , false // use texture
-										 , false // flat
-										 , false // decal texture?
-										 , pointOutputHolder  // modulous of this point.
+									normal = opts.addPoint( pointOutputHolder
 										 , data1*10+elements.data[data1], data0*10+elements.data[data0], t, true
 									);
 									if( t < 0.00001 ) 

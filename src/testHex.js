@@ -31,48 +31,25 @@ const dirkeys = ["left","ul","ur","right","lr","ll"];
 const dirs =  [
 { /* even Y*/
 	left: {x:-1,y:0},
-	right:{x:1,y:0},
 	ul : { x:-1, y:-1},
 	ur : { x:0, y:-1 },
-	ll : { x:-1, y:1 },
+	right:{x:1,y:0},
 	lr : { x:0, y:1 },
+	ll : { x:-1, y:1 },
 }
 
 , { /* odd Y*/
 	left: {x:-1,y:0},
-	right:{x:1,y:0},
 	ul : { x:0, y:-1},
 	ur : { x:1, y:-1 },
-	ll : { x:0, y:1 },
+	right:{x:1,y:0},
 	lr : { x:1, y:1 },
+	ll : { x:0, y:1 },
 	
 }
 ]
 
 
-
-const corners = [
-{ra:0,rb:1,ofs1:0,ofs2:1,p:4 ,xs:1,ys:1 ,xm:0,ym:0 ,yt:0,both:false,odd:true}  ,
-{ra:0,rb:1,ofs1:1,ofs2:0,p:4 ,xs:1,ys:0 ,xm:0,ym:0 ,yt:1,both:false, odd:false}  ,
-
-{ra:0,rb:0,ofs1:0,ofs2:1,p:0 ,xs:0,ys:1 ,xm:0,ym:0 ,yt:0,both:true}  ,
-{ra:1,rb:1,ofs1:0,ofs2:1,p:1 ,xs:0,ys:0 ,xm:0,ym:1 ,yt:0,both:true}   ,
-{ra:0,rb:1,ofs1:0,ofs2:0,p:2 ,xs:1,ys:0 ,xm:0,ym:0 ,yt:0,both:true}    ,
-{ra:0,rb:1,ofs1:1,ofs2:1,p:3 ,xs:0,ys:0 ,xm:1,ym:0 ,yt:0,both:true}     
-];
-
-
-const draws = [
-
-		{ both:false,odd:false, match0:0,match1:2 },
-	{ both:false,odd:true, match0:0,match1:3 },
-	{ both:false,odd:true, match0:1,match1:2 },
-	{ both:false,odd:false, match0:1,match1:3 },
-	{ both:true,odd:true, match0:0,match1:4 },
-	{ both:true,odd:true, match0:1,match1:4 },
-	{ both:true,odd:true, match0:2,match1:4 },
-	{ both:true,odd:true, match0:3,match1:4 },
-	];
 
 init();
 animate();
@@ -110,79 +87,6 @@ function keydown(evt) {
 		keystate[evt.code].now = Date.now() ;
 	}
 
-	if( evt.code === 'KeyA' ) {
-		for( let x = 0; x < cells_x; x++ ) 
-			for( let y = 0; y < cells_y; y++ ) {
-				data.grid[x][y] = 0;
-			}
-		for( let x = 0; x < 5; x++ ) 
-			{
-				data.grid[x+4][x+5] = 1;
-				data.grid[x+4][9-x] = 1;
-			}
-	}
-
-	if( evt.code === 'KeyB' ) {
-		for( let x = 0; x < cells_x; x++ ) 
-			for( let y = 0; y < cells_y; y++ ) {
-				data.grid[x][y] = 0;
-			}
-		for( let x = 0; x < 5; x++ ) for( let y = 0; y < 5; y++ )
-			{
-				data.grid[x+4][y+5] = 1;
-			}
-	}
-
-	if( evt.code === 'KeyC' ) {
-		for( let x = 0; x < cells_x; x++ ) 
-			for( let y = 0; y < cells_y; y++ ) {
-				data.grid[x][y] = 0;
-			}
-		for( let x = 0; x < 5; x++ ) 
-			{
-				data.grid[x+4][5] = 1;
-			}
-	}
-
-	if( evt.code === 'KeyD' ) {
-		for( let x = 0; x < cells_x; x++ ) 
-			for( let y = 0; y < cells_y; y++ ) {
-				data.grid[x][y] = 0;
-			}
-		for( let x = 0; x < 5; x++ ) 
-			{
-				data.grid[x+4][6] = 1;
-			}
-	}
-
-	if( evt.code === 'KeyE' ) {
-		for( let x = 0; x < cells_x; x++ ) 
-			for( let y = 0; y < cells_y; y++ ) {
-				data.grid[x][y] = 0;
-			}
-		for( let x = 0; x < 5; x++ ) 
-			{
-				data.grid[x+4][6] = 1;
-			}
-		for( let x = 0; x < 5; x++ ) 
-			{
-				data.grid[x+4][x+5] = 1;
-			}
-	}
-	if( evt.code === 'KeyF' ) {
-		for( let x = 0; x < cells_x; x++ ) 
-			for( let y = 0; y < cells_y; y++ ) {
-				data.grid[x][y] = 0;
-			}
-		for( let x = 0; x < 5; x++ ) 
-			{
-				data.grid[x+4][5] = 1;
-			}
-		for( let x = 0; x < 5; x++ ) 
-			{
-				data.grid[x+4][x+5] = 1;
-			}
-	}
 
 } 
 
@@ -290,19 +194,14 @@ function animate() {
 	} while( false );
 
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
-ctx.fillRect( 0, 0, canvas.width, canvas.height );	
-const nx = 5;
-const ny = 5;
+	//ctx.fillRect( 0, 0, canvas.width, canvas.height );	
 
-			//ctx.close();
-
-
-
+	
 	ctx.beginPath();
 		ctx.strokeStyle = "red";
 		ctx.lineWidth = 1;
-	for( let x = 0; x < cells_x; x++ ) {
-		for( let y = 0; y < cells_y; y++ ) {
+	for( let x = -3; x < cells_x; x++ ) {
+		for( let y = -3; y < cells_y; y++ ) {
 			const cent = toReal( x, y );
 			ctx.beginPath();
 			ctx.fillStyle = (x&1)
@@ -349,19 +248,20 @@ const ny = 5;
 	}
 */
 
+for( let z = 0; z < 3; z++ ) {
 
-	ctx.beginPath();
 	ctx.beginPath();
 		ctx.strokeStyle = "#ffbbbb80";
 ctx.lineWidth = 1;
 		ctx.font = "24px san-serif";
 	for( let x = 0; x < cells_x; x++ ) {
 		for( let y = 0; y < cells_y; y++ ) {
-			const cent = toReal( x, y );
-
-			ctx.fillStyle = "#000";
+			const cent = toReal( x, y, z, z===2 );
+			if( z == 2 ) ctx.fillStyle = "red";
+			else if( z ) ctx.fillStyle = "blue";
+			else ctx.fillStyle = "black";
 			ctx.fillText( `${x},${y}`, ofsx+cells_w*(cent.x), ofsy+cells_h*(cent.y) );
-
+			ctx.fillRect( ofsx+cells_w*(cent.x)-1, ofsy+cells_h*(cent.y)-1,3,3);
 
 			ctx.moveTo( ofsx+cells_w*(cent.x), ofsy+cells_h*(cent.y) );
 			ctx.lineTo( ofsx+cells_w*(cent.x - 0.5), ofsy+cells_h*(cent.y ) );
@@ -382,10 +282,10 @@ ctx.lineWidth = 1;
 			ctx.moveTo( ofsx+cells_w*(cent.x), ofsy+cells_h*(cent.y) );
 			ctx.lineTo( ofsx+cells_w*(cent.x + 0.25), ofsy+cells_h*(cent.y - 0.375) );
 
-			ctx.stroke();
 			                             }
 }
-
+			ctx.stroke();
+}
 
 
 
@@ -397,8 +297,9 @@ ctx.lineWidth = 1;
 	let hasApnt = false;
 	let lastDel = 0;
 let chains = [];
-	for (let x = 0; x < cells_x-1; x++) {
-		for (let y = 0; y < cells_y-1; y++) {
+
+	for (let x = -1; x <= cells_x; x++) {
+		for (let y = -1; y <= cells_y; y++) {
 			const odd = (y) & 1;
 			const r0 = toReal( x, y );
 
@@ -410,23 +311,15 @@ let chains = [];
 					ctx.stroke();
 				}
 				hasApnt = false;
-				const here = data.grid[x][y]-0.5;
+				const here = (x < 0 || y < 0 || x>=cells_x || y >= cells_y)?-0.5:data.grid[x][y]-0.5;
 				ctx.beginPath();
 				ctx.strokeStyle = "black";
 				let chain = [];
 				for( let key of dirkeys ) {
 					const hx = x+dirs[odd][key].x;
 					const hy = y+dirs[odd][key].y;
-					if( hx < 0 || hy < 0 || hx >= cells_x || hy >= cells_y ) { 
-							if( hasApnt ) {
-								ctx.strokeStyle = "red";
-								ctx.stroke();
-							}
-						firstPnt = false;
-						hasApnt = false;
-						continue;
-					}
-					const d = data.grid[hx][hy]-0.5;
+					let outside = ( hx < 0 || hy < 0 || hx >= cells_x || hy >= cells_y );
+					const d = outside?-0.5:data.grid[hx][hy]-0.5;
 					const r = toReal( hx, hy );
 					if( here > 0 ) {
 						if( d <= 0 ) {
@@ -450,6 +343,7 @@ let chains = [];
 							hasApnt = false;
 						}
 					} else {
+
 						if( d > 0 ) {
 							lastDel = (d)/(d-here);
 							if( hasApnt ) {
@@ -576,11 +470,18 @@ let chains = [];
 }
 
 
-function toHex(rx,ry) {
+function toHex(rx,ry,rz) {
+	rz = rz || 0;
 	rx /= cells_w;
 	ry /= cells_h;
 
 	ry /= 0.75;//1.688
+	
+	const z = Math.floor( rz + 0.5 );
+	if( z&1 ) {
+		ry -= 0.75;
+	}
+	
 	const y = Math.floor( ry + 0.5 );
 	if( y&1 )
 		return {x:Math.floor(rx+0.5), y:Math.floor(ry+0.5)};
@@ -589,13 +490,28 @@ function toHex(rx,ry) {
 }
 
 
-function toReal(hx,hy) {
+function toReal(hx,hy,hz,alt) {
    // hx=0, hy=0 == rx=0, ry=0;
 	// rx = hx + (((hy%2)-1)/2
 	// hx + 1 = rx + 1;
 	// rx += (((hy%2)-1)/2;
+
+	const z = Math.floor( hz + 0.5 );
+
+if( alt )
+{
 	const rx = hx + (((hy%2)-1)/2 );
-	const ry = hy * 0.75;
-	
-	return {x:rx, y:ry };	
+	const ry = hy * 0.75 + ( ( alt )?+0.5:0);
+	const rz = hz * 0.75;
+
+	return {x:rx, y:ry, z:rz };	
+}else{
+//	let ty = ry; while( ty < 0 ) ty += 2;
+	const rx = hx + (hy<0?((hy&1)?1:0)+ (((hy%2)-1)/2 ): (((hy%2)-1)/2 )) +( ( z&1 )?+0.5:0);
+	const ry = hy * 0.75 + ( ( z&1 )?+0.25:0);
+	const rz = hz * 0.75;
+
+		
+	return {x:rx, y:ry, z:rz };	
+}
 }

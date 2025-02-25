@@ -26,13 +26,13 @@ const keystate = {};
 
 
 const corners = [
-{ra:0,rb:1,ofs1:0,ofs2:1,p:4,xs:1,ys:1,xm:0,ym:0,yt:0,both:false,odd:true}  ,
-{ra:0,rb:1,ofs1:1,ofs2:0,p:4,xs:1,ys:0,xm:0,ym:0,yt:1,both:false, odd:false}  ,
+{ra:0,rb:1,ofs1:0,ofs2:1,p:4 ,xs:1,ys:1 ,xm:0,ym:0 ,yt:0,both:false,odd:true}  ,
+{ra:0,rb:1,ofs1:1,ofs2:0,p:4 ,xs:1,ys:0 ,xm:0,ym:0 ,yt:1,both:false, odd:false}  ,
 
-{ra:0,rb:0,ofs1:0,ofs2:1,p:0,xs:0,ys:1,xm:0,ym:0,yt:0,both:true}  ,
-{ra:1,rb:1,ofs1:0,ofs2:1,p:1,xs:0,ys:0,xm:0,ym:1,yt:0,both:true}   ,
-{ra:0,rb:1,ofs1:0,ofs2:0,p:2,xs:1,ys:0,xm:0,ym:0,yt:0,both:true}    ,
-{ra:0,rb:1,ofs1:1,ofs2:1,p:3,xs:0,ys:0,xm:1,ym:0,yt:0,both:true}     
+{ra:0,rb:0,ofs1:0,ofs2:1,p:0 ,xs:0,ys:1 ,xm:0,ym:0 ,yt:0,both:true}  ,
+{ra:1,rb:1,ofs1:0,ofs2:1,p:1 ,xs:0,ys:0 ,xm:0,ym:1 ,yt:0,both:true}   ,
+{ra:0,rb:1,ofs1:0,ofs2:0,p:2 ,xs:1,ys:0 ,xm:0,ym:0 ,yt:0,both:true}    ,
+{ra:0,rb:1,ofs1:1,ofs2:1,p:3 ,xs:0,ys:0 ,xm:1,ym:0 ,yt:0,both:true}     
 ];
 
 
@@ -83,6 +83,81 @@ function keydown(evt) {
 		keystate[evt.code].down = true;
 		keystate[evt.code].now = Date.now() ;
 	}
+
+	if( evt.code === 'KeyA' ) {
+		for( let x = 0; x < cells_x; x++ ) 
+			for( let y = 0; y < cells_y; y++ ) {
+				data.grid[x][y] = 0;
+			}
+		for( let x = 0; x < 5; x++ ) 
+			{
+				data.grid[x+4][x+5] = 1;
+				data.grid[x+4][9-x] = 1;
+			}
+	}
+
+	if( evt.code === 'KeyB' ) {
+		for( let x = 0; x < cells_x; x++ ) 
+			for( let y = 0; y < cells_y; y++ ) {
+				data.grid[x][y] = 0;
+			}
+		for( let x = 0; x < 5; x++ ) for( let y = 0; y < 5; y++ )
+			{
+				data.grid[x+4][y+5] = 1;
+			}
+	}
+
+	if( evt.code === 'KeyC' ) {
+		for( let x = 0; x < cells_x; x++ ) 
+			for( let y = 0; y < cells_y; y++ ) {
+				data.grid[x][y] = 0;
+			}
+		for( let x = 0; x < 5; x++ ) 
+			{
+				data.grid[x+4][5] = 1;
+			}
+	}
+
+	if( evt.code === 'KeyD' ) {
+		for( let x = 0; x < cells_x; x++ ) 
+			for( let y = 0; y < cells_y; y++ ) {
+				data.grid[x][y] = 0;
+			}
+		for( let x = 0; x < 5; x++ ) 
+			{
+				data.grid[x+4][6] = 1;
+			}
+	}
+
+	if( evt.code === 'KeyE' ) {
+		for( let x = 0; x < cells_x; x++ ) 
+			for( let y = 0; y < cells_y; y++ ) {
+				data.grid[x][y] = 0;
+			}
+		for( let x = 0; x < 5; x++ ) 
+			{
+				data.grid[x+4][6] = 1;
+			}
+		for( let x = 0; x < 5; x++ ) 
+			{
+				data.grid[x+4][x+5] = 1;
+			}
+	}
+	if( evt.code === 'KeyF' ) {
+		for( let x = 0; x < cells_x; x++ ) 
+			for( let y = 0; y < cells_y; y++ ) {
+				data.grid[x][y] = 0;
+			}
+		for( let x = 0; x < 5; x++ ) 
+			{
+				data.grid[x+4][5] = 1;
+			}
+		for( let x = 0; x < 5; x++ ) 
+			{
+				data.grid[x+4][x+5] = 1;
+			}
+	}
+
 } 
 
 function keyup( evt ) {
@@ -156,6 +231,7 @@ function washValues(x, y) {
 }
 
 
+
 function animate() {
 	do {
 		const cellx = Math.floor(mouse.x / cells_w - 0.5 + 1);
@@ -213,11 +289,18 @@ function animate() {
 				ctx.fillStyle = odd?"#00000030":"#30000030";
 				ctx.fillRect( x*cells_w-cells_w/2, y*cells_h-cells_h/2, cells_w, cells_h );
 			}
-
+			
 			let d = 0, d1 = 0, d2 = 0, d3 = 0, d4 = 0, d5 = 0;
 			let hasPnt = [false, false, false, false, false];
 			let points = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
 			let hasApnt = false;
+
+			if( y & 1 ) {
+				
+			} else {
+			}
+			
+
 			// odd cell is 0,0 - 1,1
 			// even cell is 0,1 - 1,0
 			for( let corner of corners ) {
@@ -246,16 +329,24 @@ function animate() {
 			}
 			if( !hasApnt ) continue;
 
+			let first = true;
 			for( let draw of draws ) {
 				
 				if( ( ( !draw.odd === !odd ) || (draw.both)) && hasPnt[draw.match0] && hasPnt[draw.match1]  )
 				{
-						ctx.beginPath();
+					
+
+			ctx.beginPath();
+				ctx.strokeStyle = x & 1?"black":"#00ff00";
+
+					ctx.fillStyle = "#008000";
+					
 						ctx.moveTo(points[draw.match0][0] * cells_w, points[draw.match0][1] * cells_h);
 						ctx.lineTo(points[draw.match1][0] * cells_w, points[draw.match1][1] * cells_h);
-						ctx.stroke();
+			ctx.stroke();
 				}
 			}
+			ctx.fill("evenodd");
 		}
 	}
 	requestAnimationFrame(animate);
