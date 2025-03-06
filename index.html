@@ -21,6 +21,7 @@
 	<script src="./src/marchingtetrahedra.js"></script>
 	<script src="./src/marchingtetrahedra2.js"></script>
 	<script src="./src/marchingtetrahedra3.js"></script>
+	<script src="./src/marchingtetradecahedra1.js"></script>
 	<script src="./src/surfacenets.js"></script>
 
 	<script src="./src/perlinnoise.js"></script>
@@ -72,9 +73,10 @@
 	import {MarchingTetrahedra4} from "./src/marchingtetrahedra4.js"
 		var stats, scene, renderer, composer;
 		var camera, cameraControl;
-		var geometry, surfacemesh, wiremesh;
+		var geometry, geometryNormals, surfacemesh, wiremesh, lineSegments;
 		var meshers = {
-		    'Marching Tetraheda 4 (DCL-volume)' : MarchingTetrahedra4
+		    'Marching TetraDecahedra (cell)' : MarchingTetradecahedra1
+		  , 'Marching Tetraheda 4 (DCL-volume)' : MarchingTetrahedra4
 		  , 'Marching Tetraheda 3 (DCL-plane)' : MarchingTetrahedra3
 		  , 'Marching Tetraheda 2 (DCL-cell)' : MarchingTetrahedra2
 		 // , 'Marching Cubes': MarchingCubes
@@ -94,18 +96,23 @@
 
 		  scene.remove( surfacemesh );
 		  scene.remove( wiremesh );
+		  scene.remove( lineSegments );
 
-	  //Create surface mesh
-			if( document.getElementById( "showGrid").checked) {
-				var geometryHelper = opts?.geometryHelper || THREE.GridGeometryBuffer();
-				geometry = geometryHelper.geometry;
-				geometryHelper.clear();
-			}else {
-				geometry	= new THREE.Geometry();
-				geometry.vertices.length = 0;
-				geometry.faces.length = 0;
-			}
+		  //Create surface mesh
+		if( document.getElementById( "showGrid").checked) {
+			var geometryHelper = opts?.geometryHelper || THREE.GridGeometryBuffer();
+			geometry = geometryHelper.geometry;
+			geometryHelper.clear();
+		}else {
+			geometry	= new THREE.Geometry();
+			geometry.vertices.length = 0;
+			geometry.faces.length = 0;
+		}
 
+		geometryNormals	= new THREE.Geometry();
+				geometryNormals.vertices.length = 0;
+				geometryNormals.faces.length = 0;
+				geometryNormals.colors.length = 0;
 
 		  var mesher = meshers[ document.getElementById("mesher").value ]
 		var field  = testdata[ document.getElementById("datasource").value ]( document.getElementById("fillOutside").checked?-1
@@ -177,6 +184,9 @@
 		  opts.minimize = minimize,
 		  opts.maximize = maximize,
 		  opts.inflation = inflatVal;
+		  opts.normalVertices = geometryNormals && geometryNormals.vertices;
+		  opts.normalColors = geometryNormals && geometryNormals.colors;
+		  opts.geometryNormals = geometryNormals;
 		  opts.vertices = geometry.vertices;
 		  opts.faces = geometry.faces;
 		  opts.smoothShade = document.getElementById( "smoothShade" ).checked;
@@ -205,6 +215,8 @@
 		  minimize : document.getElementById( "minimize" ).checked,
 		  maximize : document.getElementById( "maximize" ).checked,
 		  inflation : inflatVal,
+		  normalVertices : geometryNormals && geometryNormals.vertices,
+		  normalColors : geometryNormals && geometryNormals.colors,
 		  vertices : geometry.vertices,
 		  faces : geometry.faces,
 		  smoothShade : document.getElementById( "smoothShade" ).checked,
@@ -241,6 +253,9 @@
 
 		if( opts.showGrid ) {
 			for(var i=0; i<result.vertices.length; ++i) {
+				if( isNaN( result.vertices[i][0] ) || result.vertices[i][0] > 99999999999 ) debugger;
+				if( isNaN( result.vertices[i][1] ) || result.vertices[i][1] > 99999999999 ) debugger;
+				if( isNaN( result.vertices[i][2] ) || result.vertices[i][2] > 99999999999 ) debugger;
 				geometryHelper.addPoint( result.vertices[i]
 									, null, null // texture, and uv[1,0] 
 									 , [0xA0,0x00,0xA0,255] // edge color
@@ -413,10 +428,24 @@
 		scene.add( surfacemesh );
 		scene.add( wiremesh );
 
+		if( geometryNormals ) {
+			var linematerial = new THREE.LineBasicMaterial({
+				color : 0xffffff
+			  , vertexColors: THREE.VertexColors
+			});
+			lineSegments = new THREE.LineSegments( geometryNormals, linematerial );
+			scene.add( lineSegments );
+		}
+
 	  var bb = geometry.boundingBox;
 	  wiremesh.position.x = surfacemesh.position.x = -(bb.max.x + bb.min.x) / 2.0;
 	  wiremesh.position.y = surfacemesh.position.y = -(bb.max.y + bb.min.y) / 2.0;
 	  wiremesh.position.z = surfacemesh.position.z = -(bb.max.z + bb.min.z) / 2.0;
+		  if( geometryNormals ) {
+				lineSegments.position.x = surfacemesh.position.x;
+				lineSegments.position.y = surfacemesh.position.y;
+				lineSegments.position.z = surfacemesh.position.z;
+			}
 		}
 	
 		window.doInit = ()=>{
