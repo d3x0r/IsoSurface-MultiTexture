@@ -32,26 +32,54 @@ function createTestData() {
 			var volume = new Float32Array((res[0]+(fill?2:0)) * (res[1]+(fill?2:0)) * (res[2]+(fill?2:0)))
 				, n = 0;
 			if( fill )
-			for(var k=0; k < 1; k++ )
-			for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
-			for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
-				if( fill < 0 )
-					volume[n] = 2.3 * Math.random();
-				if( fill > 0 )
-					volume[n] = -2.3 * Math.random();
-			}
-			for(var k=0, z=dims[2][0]-dims[2][2]; k<res[2]; ++k, z+=dims[2][2])
-			for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
-			for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
-				if( j < 0 || i < 0 || j == res[1] || i == res[0]){
+				for(var k=0; k < 1; k++ )
+				for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
+				for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
 					if( fill < 0 )
 						volume[n] = 2.3 * Math.random();
-					else if( fill > 0 )
+					if( fill > 0 )
 						volume[n] = -2.3 * Math.random();
-					else n--;
-				}else
-					volume[n] = f(x,y,z);
+				}
+
+			if( true ) {
+				// offset the grid for packed sphere mesh
+				const i_mod = Math.floor(res[0]/2);
+				const j_mod = Math.floor(res[1]/2);
+				const k_mod = Math.floor(res[2]/2);
+				for(var k=0, z=dims[2][0]-dims[2][2]; k<res[2]; ++k, z+=dims[2][2])
+				for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
+				for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
+					if( j < 0 || i < 0 || j == res[1] || i == res[0]){
+						if( fill < 0 )
+							volume[n] = 2.3 * Math.random();
+						else if( fill > 0 )
+							volume[n] = -2.3 * Math.random();
+						else n--;
+					} else {
+						const realPos = toReal(i-i_mod,j-j_mod,k-k_mod);
+						volume[n] = f(1.5*realPos.x/res[0] * (dims[0][1]-dims[0][0])
+										,1.5*realPos.y/res[1] * (dims[1][1]-dims[1][0])
+										,1.5*realPos.z/res[2] * (dims[2][1]-dims[2][0] ), i, j, k);
+					}
+				}
+			}else{
+				for(var k=0, z=dims[2][0]-dims[2][2]; k<res[2]; ++k, z+=dims[2][2])
+				for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
+				for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
+					if( j < 0 || i < 0 || j == res[1] || i == res[0]){
+						if( fill < 0 )
+							volume[n] = 2.3 * Math.random();
+						else if( fill > 0 )
+							volume[n] = -2.3 * Math.random();
+						else n--;
+					} else {
+						volume[n] = f(x,y,z);
+					}
+				}
+
 			}
+
+
 			if( fill )
 			for(var k=0; k < 1; k++ )
 			for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
@@ -68,27 +96,28 @@ function createTestData() {
 		});
 	}
 
-	result['Sphere'] = makeVolume(
-		[[-1.0, 1.0, 0.25],
-		 [-1.0, 1.0, 0.25],
-		 [-1.0, 1.0, 0.25]],
-		function(x,y,z) {
-			return x*x + y*y + z*z - 1.0;
-		}
-	);
-
 	result['dots'] = makeVolume(
 		[[-4.0, 4.0, 1],
 		 [-4.0, 4.0, 1],
 		 [-4.0, 6.0, 1]],
-		function(x,y,z) {
+		function(a,b,c,x,y,z) {
 			//console.log( "duh? ", x, y, z );
+			//if( x != 1 || y != 0 || z != 1 ) return 1;
 			if( ( Math.abs(x) % 2 == 1 )
 			&& ( (z < 0 ) ? ( Math.abs(y) % 2 == 1 ) : ( Math.abs(y) % 2 == 0 ) )
 			&& ( ( Math.abs(x) % 2 == 0 ) ? ( Math.abs(z) % 2 == 1 ) : ( Math.abs(z) % 2 == 1 ) ))
 				return -2.3 * Math.random();
 			else
 				return 2.3 * Math.random();
+		}
+	);
+
+	result['Sphere'] = makeVolume(
+		[[-1.0, 1.0, 0.25],
+		 [-1.0, 1.0, 0.25],
+		 [-1.0, 1.0, 0.25]],
+		function(x,y,z) {
+			return x*x + y*y + z*z - 1.0;
 		}
 	);
 
