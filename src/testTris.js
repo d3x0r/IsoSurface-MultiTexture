@@ -236,6 +236,7 @@ function animate() {
 	do {
 		const cellx = Math.floor(mouse.x / cells_w - 0.5 + 1);
 		const celly = Math.floor(mouse.y / cells_h - 0.5 + 1);
+
 		if( cellx >= data.grid.length || cellx < 0 ) break;
 		if( celly >= data.grid[0].length || celly < 0 ) break;
 
@@ -330,20 +331,19 @@ function animate() {
 			if( !hasApnt ) continue;
 
 			let first = true;
-			for( let draw of draws ) {
-				
+			for( let draw of draws ) {				
 				if( ( ( !draw.odd === !odd ) || (draw.both)) && hasPnt[draw.match0] && hasPnt[draw.match1]  )
 				{
 					
 
-			ctx.beginPath();
-				ctx.strokeStyle = x & 1?"black":"#00ff00";
+					ctx.beginPath();
+					ctx.strokeStyle = x & 1?"black":"#00ff00";
 
 					ctx.fillStyle = "#008000";
 					
-						ctx.moveTo(points[draw.match0][0] * cells_w, points[draw.match0][1] * cells_h);
-						ctx.lineTo(points[draw.match1][0] * cells_w, points[draw.match1][1] * cells_h);
-			ctx.stroke();
+					ctx.moveTo(points[draw.match0][0] * cells_w, points[draw.match0][1] * cells_h);
+					ctx.lineTo(points[draw.match1][0] * cells_w, points[draw.match1][1] * cells_h);
+					ctx.stroke();
 				}
 			}
 			ctx.fill("evenodd");

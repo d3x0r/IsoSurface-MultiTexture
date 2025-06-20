@@ -597,7 +597,7 @@ var MarchingTetradecahedra1 = (function () {
 								values[n+1] = -data[gx + (gy)*dims[0] + (gz)*dims[0]*dims[1]];
 						}
 					}
-if( values[0] < 0 ) continue;
+					if( values[0] < 0 ) continue;
 					cellCompute(yodd, values, dirDirs[yodd]);
 				}
 			}

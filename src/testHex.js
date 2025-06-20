@@ -13,6 +13,8 @@ const cells_w = canvas.width/(cells_x+0.5);
 const cells_h = canvas.height/(cells_y*0.75+0.5);
 const ofsx = cells_w + cells_w *2;
 const ofsy = cells_h/2+ cells_h *2;
+let biasx = -3;
+let biasy = -3;
 
 const data = {
 	grid: [],
@@ -29,16 +31,7 @@ const keystate = [];
 const dirkeys = ["left","ul","ur","right","lr","ll"];
 
 const dirs =  [
-{ /* even Y*/
-	left: {x:-1,y:0},
-	ul : { x:-1, y:-1},
-	ur : { x:0, y:-1 },
-	right:{x:1,y:0},
-	lr : { x:0, y:1 },
-	ll : { x:-1, y:1 },
-}
-
-, { /* odd Y*/
+ { /* odd Y*/
 	left: {x:-1,y:0},
 	ul : { x:0, y:-1},
 	ur : { x:1, y:-1 },
@@ -47,8 +40,20 @@ const dirs =  [
 	ll : { x:0, y:1 },
 	
 }
+,{ /* even Y*/
+left: {x:-1,y:0},
+ul : { x:-1, y:-1},
+ur : { x:0, y:-1 },
+right:{x:1,y:0},
+lr : { x:0, y:1 },
+ll : { x:-1, y:1 },
+}
+
+
 ]
 
+
+const sidePoints = [ [-0.5, 0.25],[-0.5,-0.25],[0,-0.5],[0.5,-0.25],[0.5,0.25],[0,0.5]]
 
 
 init();
@@ -80,14 +85,15 @@ function keydown(evt) {
 	if( !keystate[evt.code] )
 		keystate[evt.code] = {
 			down:true,
-			now:Date.now() 
+			now:Date.now(),
+			downTick: 0
 		}
 	else  {
 		keystate[evt.code].down = true;
 		keystate[evt.code].now = Date.now() ;
 	}
-
-
+	evt.stopPropagation();
+	evt.preventDefault()
 } 
 
 function keyup( evt ) {
@@ -124,10 +130,11 @@ function washValues_(x, y,d) {
 	const todo = [];
 	todo.push({ x, y, d: d });
 	let cell = null;
+	const rxy = toReal( x, y );
 	while (cell = todo.shift()) {
 		if (cell.x < 0 || cell.y < 0) continue;
 		if (cell.x >= data.grid.length || cell.y >= data.grid[0].length) continue;
-		did.pop(cell);
+		did.push(cell);
 		data.grid[cell.x][cell.y] += cell.d;
 		let over = 0;
 		if( data.grid[cell.x][cell.y] > 1 ) {
@@ -140,19 +147,43 @@ function washValues_(x, y,d) {
 		}
 		if( over )
 		{
-			const near = [{ x: cell.x + 1, y:cell.y, d: over / 4 }
-				, { x:cell.x, y: cell.y + 1, d: over / 4 }
-				, { x: cell.x - 1, y:cell.y, d: over / 4 }
-				, { x:cell.x, y: cell.y - 1, d: over / 4 }];
+			const odd = (cell.y)&1;
+			const near = odd?[{ x: cell.x + 1, y:cell.y, d: 0 }
+				, { x: cell.x, y:cell.y + 1, d: 0 }
+				, { x: cell.x-1, y: cell.y + 1, d: 0 }
+				, { x: cell.x-1, y: cell.y, d: 0 }
+				, { x: cell.x -1, y:cell.y - 1, d: 0 }
+				, { x: cell.x , y: cell.y - 1, d: 0 }
+				]:[{ x: cell.x + 1, y:cell.y, d: 0 }
+				, { x: cell.x+1, y:cell.y + 1, d: 0 }
+				, { x: cell.x, y: cell.y + 1, d: 0 }
+				, { x: cell.x-1, y: cell.y, d: 0 }
+				, { x: cell.x, y:cell.y - 1, d: 0 }
+				, { x: cell.x+1, y: cell.y - 1, d: 0 }
+		];
 			let willdo = 0;
-			for (let n of near)
-				if (!did.find(old => (old.x == n.x) && (old.y === n.y)))
-					if (!todo.find(old => (old.x == n.x) && (old.y === n.y))) {
-						todo.push(n);
+			for (let n of near) {
+				const nr = toReal( n.x-rxy.x, n.y-rxy.y );
+				const nl = nr.x*nr.x + nr.y*nr.y;
+				if (!did.find(old => (old.x == n.x) && (old.y === n.y))) {
+					let doit=null;
+					if (!(doit=todo.find(old => (old.x == n.x) && (old.y === n.y)))) {
+
+						const order = todo.findIndex( old=> {
+							const r = toReal( old.x-rxy.x, old.y-rxy.y );
+							return r.x*r.y+r.y*r.y > nl; // order by distance to the center
+						});
+						if( order >= 0 ) todo.splice(order, 0, n);
+						else todo.push(n);
 						willdo++;		
-					}			
+					}else {
+						near[near.indexOf(n)] = doit; // replace with the existing one
+						willdo++;
+					}
+				}			
+			}
 			if( willdo )					
-				for( let n of near ) n.d = over/willdo;
+				for( let n of near ) n.d += over/willdo;
 		}
 	}
 }
@@ -163,12 +194,37 @@ function washValues(x, y) {
 
 
 
-function animate() {
+function animate(tick) {
 	do {
 		const cellx = Math.floor(mouse.x - 0.5 + 1);
 		const celly = Math.floor(mouse.y - 0.5 + 1);
 		if( cellx >= data.grid.length || cellx < 0 ) break;
 		if( celly >= data.grid[0].length || celly < 0 ) break;
+
+	if( "ArrowLeft" in keystate && keystate.ArrowLeft.down ) {
+		if( !keystate.ArrowLeft.downTick || keystate.ArrowLeft.downTick < tick ) {
+			keystate.ArrowLeft.downTick = tick + 250;
+			biasx -= 1;
+		}
+	}
+	if( "ArrowRight" in keystate && keystate.ArrowRight.down ) {
+		if( !keystate.ArrowRight.downTick || keystate.ArrowRight.downTick < tick ) {
+			keystate.ArrowRight.downTick = tick + 250;
+			biasx += 1;
+		}
+	}
+	if( "ArrowUp" in keystate && keystate.ArrowUp.down ) {
+		if( !keystate.ArrowUp.downTick || keystate.ArrowUp.downTick < tick ) {
+			keystate.ArrowUp.downTick = tick + 250;
+			biasy -= 1;
+		}
+	}
+	if( "ArrowDown" in keystate && keystate.ArrowDown.down ) {
+		if( !keystate.ArrowDown.downTick || keystate.ArrowDown.downTick < tick ) {
+			keystate.ArrowDown.downTick = tick + 250;
+			biasy += 1;
+		}
+	}
 
 	if( "ShiftLeft" in keystate && keystate.ShiftLeft.down ) {
 		data.grid[cellx][celly] += 0.25;
@@ -207,15 +263,12 @@ function animate() {
 			ctx.fillStyle = (x&1)
 									?(y&1)?"#cce":"#CEC"
 									:(y&1)?"#ecc":"#eEC" ;
-			ctx.moveTo( ofsx+cells_w*(cent.x - 0.5), ofsy+cells_h*(cent.y + 0.25) );
-			ctx.lineTo( ofsx+cells_w*(cent.x - 0.5), ofsy+cells_h*(cent.y - 0.25) );
-
-			ctx.lineTo( ofsx+cells_w*(cent.x      ), ofsy+cells_h*(cent.y - 0.5) );
-
-			ctx.lineTo( ofsx+cells_w*(cent.x + 0.5), ofsy+cells_h*(cent.y - 0.25) );
-			ctx.lineTo( ofsx+cells_w*(cent.x + 0.5), ofsy+cells_h*(cent.y + 0.25) );
-
-			ctx.lineTo( ofsx+cells_w*(cent.x      ), ofsy+cells_h*(cent.y + 0.5) );
+			sidePoints.forEach( (point,idx)=>{ 
+					if( idx )
+						ctx.lineTo( ofsx+cells_w*(cent.x + point[0]), ofsy+cells_h*(cent.y + point[1]) );
+					else
+						ctx.moveTo( ofsx+cells_w*(cent.x + point[0]), ofsy+cells_h*(cent.y  + point[1]) );
+			} );
 			ctx.closePath();
 			ctx.stroke();
 			ctx.fill();
@@ -252,21 +305,23 @@ function animate() {
 
 for( let z = -3; z < 3; z++ ) {
 	//const ofsx = saveofsx - (( z < 0 )?10:0);
-	if( z != -1 && z != 0) continue;
+	if( z != 0) continue;
 	ctx.beginPath();
-		ctx.strokeStyle = "#ffbbbb80";
-ctx.lineWidth = 1;
-		ctx.font = "24px san-serif";
-	for( let x = -3; x < cells_x; x++ ) {
-		for( let y = -3; y < cells_y; y++ ) {
-			const cent = toReal( x, y, z  );
+	ctx.strokeStyle = "#ffbbbb80";
+	ctx.lineWidth = 1;
+	ctx.font = "18px san-serif";
+	for( let x = 0; x < cells_x; x++ ) {
+		for( let y = 0; y < cells_y; y++ ) {
+			const cent = toReal( x-3, y-3, z  );
 			if( mod(z,3) == 2 ) ctx.fillStyle = z<0?"#700":"#F00";
 			else if( mod(z,3) == 1 ) ctx.fillStyle = z<0?"#007":"#00F";
 			else ctx.fillStyle = z<0?"#444":"#000";
 
-			ctx.fillText( `${x},${y}`, (z<0?6:0)+ofsx+cells_w*(cent.x), ofsy+cells_h*(cent.y) );
+			ctx.fillText( `${x+biasx},${y+biasy}\n${(x+biasx)>=0 && (y+biasy)>=0 ? data.grid[x+biasx][y+biasy].toFixed(2):0}`, (z<0?6:0)+ofsx+cells_w*(cent.x), ofsy+cells_h*(cent.y) );
+			// tiny dot indicataing where the text refers...
 			ctx.fillRect( ofsx+cells_w*(cent.x)-1, ofsy+cells_h*(cent.y)-1,3,3);
 
+			// perpendiculars to sides...
 			ctx.moveTo( ofsx+cells_w*(cent.x), ofsy+cells_h*(cent.y) );
 			ctx.lineTo( ofsx+cells_w*(cent.x - 0.5), ofsy+cells_h*(cent.y ) );
 			
@@ -286,9 +341,9 @@ ctx.lineWidth = 1;
 			ctx.moveTo( ofsx+cells_w*(cent.x), ofsy+cells_h*(cent.y) );
 			ctx.lineTo( ofsx+cells_w*(cent.x + 0.25), ofsy+cells_h*(cent.y - 0.375) );
 
-			                             }
-}
-			ctx.stroke();
+		}
+	}
+	ctx.stroke();
 }
 
 
@@ -300,7 +355,7 @@ ctx.lineWidth = 1;
 
 	let hasApnt = false;
 	let lastDel = 0;
-let chains = [];
+	let chains = [];
 
 	for (let x = -1; x <= cells_x; x++) {
 		for (let y = -1; y <= cells_y; y++) {
@@ -416,60 +471,6 @@ let chains = [];
 			ctx.fill();
 
 
-/*
-			let d = 0, d1 = 0, d2 = 0, d3 = 0, d4 = 0, d5 = 0;
-			let hasPnt = [false, false, false, false, false];
-			let points = [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]];
-			let hasApnt = false;
-			// odd cell is 0,0 - 1,1
-			// even cell is 0,1 - 1,0
-			for( let corner of corners ) {
-				// 0,0 - 0,1
-				// a = 0,0
-				// b = 0,1
-				if( !corner.both && !corner.odd !== !odd ) continue;
-				const a = data.grid[x+corner.ra][y+corner.ofs1] - 0.5
-				const b = data.grid[x+corner.rb][y+corner.ofs2] - 0.5;
-				const del = a - b;
-				if (a >= 0 && b < 0) {
-					const d2 = -b / del;
-					points[corner.p][0] = x + (((corner.xs+corner.xm)*(1-d2) )+ (corner.ym)) ;
-					points[corner.p][1] = y + (corner.xm)+((corner.ys+corner.ym)*(1-d2))+(corner.yt*(d2)  );
-					hasPnt[corner.p] = true;
-					hasApnt = true;
-					//console.log( "Point 0(1) is", x, y, d2, points[0] );
-				} else if (b >= 0 && a < 0) {
-					const d2 = a / del;
-					points[corner.p][0] = x + ((corner.xm+corner.xs)*(d2) + (corner.ym) );
-					points[corner.p][1] = y + (corner.xm) + ((corner.ys+corner.ym)*(d2) +(corner.yt*(1-d2)) );
-					hasPnt[corner.p] = true;
-					hasApnt = true;
-					//console.log( "Point 0(2) is", x, y, d2, points[0] );
-				}
-			}
-			if( !hasApnt ) continue;
-
-			let first = true;
-			for( let draw of draws ) {
-				
-				if( ( ( !draw.odd === !odd ) || (draw.both)) && hasPnt[draw.match0] && hasPnt[draw.match1]  )
-				{
-					
-
-			ctx.beginPath();
-				ctx.strokeStyle = x & 1?"black":"#00ff00";
-
-					ctx.fillStyle = "#008000";
-					
-						ctx.moveTo(points[draw.match0][0] * cells_w, points[draw.match0][1] * cells_h);
-						ctx.lineTo(points[draw.match1][0] * cells_w, points[draw.match1][1] * cells_h);
-			ctx.stroke();
-				}
-			}
-			ctx.fill("evenodd");
-		}
-	}
-*/
 	requestAnimationFrame(animate);
 }
 
@@ -488,9 +489,9 @@ function toHex(rx,ry,rz) {
 	
 	const y = Math.floor( ry + 0.5 );
 	if( y&1 )
-		return {x:Math.floor(rx+0.5), y:Math.floor(ry+0.5)};
-	else
 		return {x:Math.floor(rx+1.0), y:Math.floor(ry+0.5)};
+	else
+		return {x:Math.floor(rx+0.5), y:Math.floor(ry+0.5)};
 }
 
 

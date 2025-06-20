@@ -96,6 +96,28 @@ function createTestData() {
 		});
 	}
 
+	result['testdots'] = makeVolume(
+		[[-1.0, 1.0, 1],
+		 [-1.0, 1.0, 1],
+		 [-1.0, 1.0, 1]],
+		function(a,b,c,x,y,z) {
+			//console.log( "duh? ", x, y, z );
+			//if( x != 1 || y != 0 || z != 1 ) return 1;
+			if( x=== 0 && y ===0 && z === 0 ) 
+				return -1;
+			if( x=== 0 && y === 1 && z === 0 ) 
+				return -1;
+			return 1;
+			if( ( Math.abs(x) % 2 == 1 )
+			&& ( (z < 0 ) ? ( Math.abs(y) % 2 == 1 ) : ( Math.abs(y) % 2 == 0 ) )
+			&& ( ( Math.abs(x) % 2 == 0 ) ? ( Math.abs(z) % 2 == 1 ) : ( Math.abs(z) % 2 == 1 ) ))
+				return -2.3 * Math.random();
+			else
+				return 2.3 * Math.random();
+		}
+	);
+
+
 	result['dots'] = makeVolume(
 		[[-4.0, 4.0, 1],
 		 [-4.0, 4.0, 1],
