@@ -26,7 +26,10 @@ function createTestData() {
 		return memoize( function(fill) {
 			var res = new Array(3);
 			for(var i=0; i<3; ++i) {
-				res[i] = 2 + Math.ceil((dims[i][1] - dims[i][0]) / dims[i][2]);
+				// one for on-min, one for on -max, and one for zero....
+				// -1 to 1 is 5
+				//  3 to 5 is also 5 values
+				res[i] = (fill?3:1) + Math.ceil((dims[i][1] - dims[i][0]) / dims[i][2]);
 			}
 
 			var volume = new Float32Array((res[0]+(fill?2:0)) * (res[1]+(fill?2:0)) * (res[2]+(fill?2:0)))
@@ -41,40 +44,36 @@ function createTestData() {
 						volume[n] = -2.3 * Math.random();
 				}
 
-			if( true ) {
+			if( fill ) {
 				// offset the grid for packed sphere mesh
 				const i_mod = Math.floor(res[0]/2);
 				const j_mod = Math.floor(res[1]/2);
 				const k_mod = Math.floor(res[2]/2);
-				for(var k=0, z=dims[2][0]-dims[2][2]; k<res[2]; ++k, z+=dims[2][2])
-				for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
-				for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
-					if( j < 0 || i < 0 || j == res[1] || i == res[0]){
+				for(var k=0, z=dims[2][0]; z<=dims[2][1]; ++k, z+=dims[2][2])
+				for(var j=-1, y=dims[1][0]-dims[1][2]; y<=(dims[1][1]+dims[1][2]); ++j, y+=dims[1][2])
+				for(var i=-1, x=dims[0][0]-dims[0][2]; x<=(dims[0][1]+dims[0][2]); ++i, x+=dims[0][2], ++n) {
+					if( k == res[2] 
+						|| j < 0 || i < 0 
+						|| j == res[1] || i == res[0]){
 						if( fill < 0 )
 							volume[n] = 2.3 * Math.random();
 						else if( fill > 0 )
 							volume[n] = -2.3 * Math.random();
-						else n--;
 					} else {
-						const realPos = toReal(i-i_mod,j-j_mod,k-k_mod);
-						volume[n] = f(1.5*realPos.x/res[0] * (dims[0][1]-dims[0][0])
-										,1.5*realPos.y/res[1] * (dims[1][1]-dims[1][0])
-										,1.5*realPos.z/res[2] * (dims[2][1]-dims[2][0] ), i, j, k);
+						const realPos = toReal(i,j,k);
+						volume[n] = f(realPos.x/res[0] * (dims[0][1]-dims[0][0]) + dims[0][0]
+										,realPos.y/res[1] * (dims[1][1]-dims[1][0]) + dims[1][0]
+										,realPos.z/res[2] * (dims[2][1]-dims[2][0] ) + dims[2][0], i, j, k);
 					}
 				}
 			}else{
 				for(var k=0, z=dims[2][0]-dims[2][2]; k<res[2]; ++k, z+=dims[2][2])
-				for(var j=-1, y=dims[1][0]-dims[1][2]; j<=res[1]; ++j, y+=dims[1][2])
-				for(var i=-1, x=dims[0][0]-dims[0][2]; i<=res[0]; ++i, x+=dims[0][2], ++n) {
-					if( j < 0 || i < 0 || j == res[1] || i == res[0]){
-						if( fill < 0 )
-							volume[n] = 2.3 * Math.random();
-						else if( fill > 0 )
-							volume[n] = -2.3 * Math.random();
-						else n--;
-					} else {
-						volume[n] = f(x,y,z);
-					}
+				for(var j=0, y=dims[1][0]-dims[1][2]; j<res[1]; ++j, y+=dims[1][2])
+				for(var i=0, x=dims[0][0]-dims[0][2]; i<res[0]; ++i, x+=dims[0][2], ++n) {
+					const realPos = toReal(i,j,k);
+					volume[n] = f(realPos.x/res[0] * (dims[0][1]-dims[0][0]) + dims[0][0]
+									,realPos.y/res[1] * (dims[1][1]-dims[1][0]) + dims[1][0]
+									,realPos.z/res[2] * (dims[2][1]-dims[2][0] ) + dims[2][0], i, j, k);
 				}
 
 			}
@@ -101,12 +100,19 @@ function createTestData() {
 		 [-1.0, 1.0, 1],
 		 [-1.0, 1.0, 1]],
 		function(a,b,c,x,y,z) {
-			//console.log( "duh? ", x, y, z );
+//			console.log( "duh? ", a,b,c, "::", x, y, z );
 			//if( x != 1 || y != 0 || z != 1 ) return 1;
-			if( x=== 0 && y ===0 && z === 0 ) 
+			if( x=== 1 && y === 1 && z === 1 ) 
 				return -1;
-			if( x=== 0 && y === 1 && z === 0 ) 
+			if( x=== 0 && y ===1 && z === 1 ) 
 				return -1;
+
+			if( x=== 1 && y === 1 && z === 0 ) 
+				return -1;
+//if(0)			
+			if( x=== 1 && y === 0 && z === 1 ) 
+				return -1;
+
 			return 1;
 			if( ( Math.abs(x) % 2 == 1 )
 			&& ( (z < 0 ) ? ( Math.abs(y) % 2 == 1 ) : ( Math.abs(y) % 2 == 0 ) )

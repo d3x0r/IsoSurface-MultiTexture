@@ -31,7 +31,7 @@ const keystate = [];
 const dirkeys = ["left","ul","ur","right","lr","ll"];
 
 const dirs =  [
- { /* odd Y*/
+ { /* even Y*/
 	left: {x:-1,y:0},
 	ul : { x:0, y:-1},
 	ur : { x:1, y:-1 },
@@ -40,13 +40,13 @@ const dirs =  [
 	ll : { x:0, y:1 },
 	
 }
-,{ /* even Y*/
-left: {x:-1,y:0},
-ul : { x:-1, y:-1},
-ur : { x:0, y:-1 },
-right:{x:1,y:0},
-lr : { x:0, y:1 },
-ll : { x:-1, y:1 },
+,{ /* odd Y*/
+	left: {x:-1,y:0},
+	ul : { x:-1, y:-1},
+	ur : { x:0, y:-1 },
+	right:{x:1,y:0},
+	lr : { x:0, y:1 },
+	ll : { x:-1, y:1 },
 }
 
 
@@ -303,13 +303,13 @@ function animate(tick) {
 //const saveofsx = ofsx;
 //const saveofsy = ofsy;
 
-for( let z = -3; z < 3; z++ ) {
+for( let z = 1; z < 4; z++ ) {
 	//const ofsx = saveofsx - (( z < 0 )?10:0);
-	if( z != 0) continue;
+	//if( z != 0) continue;
 	ctx.beginPath();
 	ctx.strokeStyle = "#ffbbbb80";
 	ctx.lineWidth = 1;
-	ctx.font = "18px san-serif";
+	ctx.font = "12px san-serif";
 	for( let x = 0; x < cells_x; x++ ) {
 		for( let y = 0; y < cells_y; y++ ) {
 			const cent = toReal( x-3, y-3, z  );
@@ -486,6 +486,9 @@ function toHex(rx,ry,rz) {
 	if( z&1 ) {
 		ry -= 0.75;
 	}
+	//if( z%2 === 0 ) {
+	//	rx -= cells_w;
+	//}
 	
 	const y = Math.floor( ry + 0.5 );
 	if( y&1 )
@@ -496,6 +499,35 @@ function toHex(rx,ry,rz) {
 
 
 function toReal(hx,hy,hz) {
+	const z = Math.floor( hz + 0.5 );
+	const oddrow = Math.abs(hy)&1;
+	const alt = mod(z,3) === 2;//(((-z)%3)==2);
+	const alt1 = mod(z,3) === 1;//(((-z)%3)==2);
+	if( alt )
+	{
+		const x = hx + (oddrow?-0.5:0 );
+		const y = hy * 0.75 + 0.5;
+		const z = hz * 0.75;
+		return {x, y, z };	
+	}else{
+		//	let ty = ry; while( ty < 0 ) ty += 2;
+		const x = hx + (oddrow?-0.5:0) + ( ( alt1)?0.5:0) ;
+		const y = hy * 0.75 + (( alt1 )?+0.25:0);
+		const z = hz * 0.75;
+		return {x, y, z };	
+	}
+
+	
+}
+
+function mod(x,y) {
+	const r = x%y;
+	if( r < 0 ) return y+r;
+	return r;	
+}
+
+
+function zzztoReal(hx,hy,hz) {
    // hx=0, hy=0 == rx=0, ry=0;
 	// rx = hx + (((hy%2)-1)/2
 	// hx + 1 = rx + 1;
@@ -509,8 +541,8 @@ function toReal(hx,hy,hz) {
 
 	if( alt )
 	{
-		const x = hx + (oddrow?0.5:0 ) + (0) ;
-		const y = hy * 0.75 + ( ( alt )?+0.5:0);
+		const x = hx + (oddrow?-0.5:0 );
+		const y = hy * 0.75 + 0.5;
 		const z = hz * 0.75;
 
 		return {x, y, z };	
@@ -527,7 +559,7 @@ function toReal(hx,hy,hz) {
 	
 }
 
-function mod(x,y) {
+function zzzmod(x,y) {
 	const r = x%y;
 	if( r < 0 ) return y+r;
 	return r;	

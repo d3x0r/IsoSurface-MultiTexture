@@ -66,9 +66,9 @@ function createTestElementData() {
 	);
 
 	result['testdots'] = makeVolume(
-		[[-1.0, 1.0, 1],
-		 [-1.0, 1.0, 1],
-		 [-1.0, 1.0, 1]],
+		[[-1.0, 1.0, 3],
+		 [-1.0, 1.0, 3],
+		 [-1.0, 1.0, 3]],
 		function(x,y,z) {
 			if( x=== 0 && y ===0 && z === 0 ) 
 				return -1;
