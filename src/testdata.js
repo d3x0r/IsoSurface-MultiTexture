@@ -13,17 +13,25 @@ function createTestData() {
 	var result = {};
 	
 	function memoize(f) {
-		var cached = null;
-		return function(a) {
-			if(cached === null) { 
-				cached = f(a);
+		let cached = null;
+		let cachedb = null;
+		return function(a,b) {
+			if(!b ){ 
+				if (cached === null) { 
+					cached = f(a,b);
+				}
+				return cached;
+			} else {
+				if( cachedb === null) { 
+					cachedb = f(a,b);
+				}
+				return cachedb;
 			}
-			return cached;
 		}
 	}
 	
 	function makeVolume(dims, f) {
-		return memoize( function(fill) {
+		return memoize( function(fill, isCuboctohedra) {
 			var res = new Array(3);
 			for(var i=0; i<3; ++i) {
 				// one for on-min, one for on -max, and one for zero....
@@ -60,7 +68,13 @@ function createTestData() {
 						else if( fill > 0 )
 							volume[n] = -2.3 * Math.random();
 					} else {
-						const realPos = toReal(i,j,k);
+						const realPos = isCuboctohedra?toReal(i,j,k):{x:i,y:j,z:k};
+						// realPos is usually a smaller area, so scale it back pu to cover the expected function area
+						if( isCuboctohedra ) {
+							realPos.x /= 0.75;
+							realPos.y /= 0.75;
+							realPos.z /= 0.75;
+						}
 						volume[n] = f(realPos.x/res[0] * (dims[0][1]-dims[0][0]) + dims[0][0]
 										,realPos.y/res[1] * (dims[1][1]-dims[1][0]) + dims[1][0]
 										,realPos.z/res[2] * (dims[2][1]-dims[2][0] ) + dims[2][0], i, j, k);
@@ -70,7 +84,13 @@ function createTestData() {
 				for(var k=0, z=dims[2][0]-dims[2][2]; k<res[2]; ++k, z+=dims[2][2])
 				for(var j=0, y=dims[1][0]-dims[1][2]; j<res[1]; ++j, y+=dims[1][2])
 				for(var i=0, x=dims[0][0]-dims[0][2]; i<res[0]; ++i, x+=dims[0][2], ++n) {
-					const realPos = toReal(i,j,k);
+						const realPos = isCuboctohedra?toReal(i,j,k):{x:i,y:j,z:k};
+					// realPos is usually a smaller area, so scale it back pu to cover the expected function area
+						if( isCuboctohedra ) {
+							realPos.x /= 0.75;
+							realPos.y /= 0.75;
+							realPos.z /= 0.75;
+						}
 					volume[n] = f(realPos.x/res[0] * (dims[0][1]-dims[0][0]) + dims[0][0]
 									,realPos.y/res[1] * (dims[1][1]-dims[1][0]) + dims[1][0]
 									,realPos.z/res[2] * (dims[2][1]-dims[2][0] ) + dims[2][0], i, j, k);
@@ -96,12 +116,15 @@ function createTestData() {
 	}
 
 	result['testdots'] = makeVolume(
-		[[-1.0, 1.0, 1],
-		 [-1.0, 1.0, 1],
-		 [-1.0, 1.0, 1]],
+		[[-2.0, 2.0, 1],
+		 [-2.0, 2.0, 1],
+		 [-2.0, 2.0, 1]],
 		function(a,b,c,x,y,z) {
 //			console.log( "duh? ", a,b,c, "::", x, y, z );
 			//if( x != 1 || y != 0 || z != 1 ) return 1;
+			x -= 1;
+			y-=2;
+			z-=1;
 			if( x=== 1 && y === 1 && z === 1 ) 
 				return -1;
 			if( x=== 0 && y ===1 && z === 1 ) 
@@ -141,9 +164,9 @@ function createTestData() {
 	);
 
 	result['Sphere'] = makeVolume(
-		[[-1.0, 1.0, 0.25],
-		 [-1.0, 1.0, 0.25],
-		 [-1.0, 1.0, 0.25]],
+		[[-1.25, 1.25, 0.25],
+		 [-1.25, 1.25, 0.25],
+		 [-1.25, 1.25, 0.25]],
 		function(x,y,z) {
 			return x*x + y*y + z*z - 1.0;
 		}

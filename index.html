@@ -21,7 +21,7 @@
 	<script src="./src/marchingtetrahedra.js"></script>
 	<script src="./src/marchingtetrahedra2.js"></script>
 	<script src="./src/marchingtetrahedra3.js"></script>
-	<script src="./src/marchingTetradecahedra1.js"></script>
+	<script src="./src/marchingCubeOctahedra1.js"></script>
 	<script src="./src/surfacenets.js"></script>
 
 	<script src="./src/perlinnoise.js"></script>
@@ -75,7 +75,7 @@
 		var camera, cameraControl;
 		var geometry, geometryNormals, surfacemesh, wiremesh, lineSegments;
 		var meshers = {
-		    'Marching TetraDecahedra (cell)' : MarchingTetradecahedra1
+		    'Marching Cuboctohedra (cell)' : MarchingCubeoctahedra1
 		  , 'Marching Tetraheda 4 (DCL-volume)' : MarchingTetrahedra4
 		  , 'Marching Tetraheda 3 (DCL-plane)' : MarchingTetrahedra3
 		  , 'Marching Tetraheda 2 (DCL-cell)' : MarchingTetrahedra2
@@ -117,7 +117,7 @@
 		  var mesher = meshers[ document.getElementById("mesher").value ]
 		var field  = testdata[ document.getElementById("datasource").value ]( document.getElementById("fillOutside").checked?-1
 			          :document.getElementById("fillInside").checked?1
-			          :0
+			          :0, (document.getElementById("mesher").value === "Marching Cuboctohedra (cell)" )
 			 )
 		var fieldElements  = testelements[ document.getElementById("datasource").value ]( field, document.getElementById("fillOutside").checked?-1
 			          :document.getElementById("fillInside").checked?1
@@ -178,6 +178,38 @@
 				}
 			}
 
+	if( document.getElementById( "showNormal" ).checked && !document.getElementById("showGrid").checked ) {
+			material	= new THREE.MeshNormalMaterial();
+			surfacemesh	= new THREE.Mesh( geometry, material );
+			surfacemesh.doubleSided = true;
+		}
+		else {
+			if( document.getElementById("showGrid").checked )
+			{
+				material	= THREE.GridGeometryMaterial();
+				material.uniforms.textureMap3.value = window.ttCommon.stack.smudge();
+				material.uniforms.cursorIconTex.value = window.ttCommon.cursorIcon;
+				material.defines.CALCULATE_COSINE_MERGE = document.getElementById( "sharpenTransition" ).checked?1:0;
+          			material.uniforms.cursorIconUp.value.set( 0, 0, 1 ); // this should update to the camera up 
+
+				surfacemesh	= new THREE.Mesh( geometry, material );
+				//cluster.THREE_solid.add( sector.THREE_solid = new THREE.Mesh( sector.solid_geometry.geometry, geometryShader ) );
+			}else {
+				material	= new THREE.MeshPhongMaterial({
+					color:0x700070
+				});
+				surfacemesh	= new THREE.Mesh( geometry, material );
+				surfacemesh.doubleSided = true;
+			}
+		}
+		var wirematerial = new THREE.MeshBasicMaterial({
+				color : 0xffffff
+			  , wireframe : true
+			});
+		wiremesh = new THREE.Mesh(geometry, wirematerial);
+		wiremesh.doubleSided = true;
+
+
 		let result;
 		if( opts && priorMesher === mesher ){
 			 opts.showGrid = document.getElementById( "showGrid").checked;
@@ -189,6 +221,7 @@
 		  opts.geometryNormals = geometryNormals;
 		  opts.vertices = geometry.vertices;
 		  opts.faces = geometry.faces;
+			opts.surfacemesh = surfacemesh;
 		  opts.smoothShade = document.getElementById( "smoothShade" ).checked;
 		  opts.showGrid = document.getElementById( "showGrid").checked;
 		}
@@ -222,6 +255,8 @@
 		  smoothShade : document.getElementById( "smoothShade" ).checked,
 		  showGrid : document.getElementById( "showGrid").checked,
 		  geometryHelper : geometryHelper,
+		  scene,
+			surfacemesh,
 			addPoint( p, type1, type2, typeDelta ) {
 
 					return opts.geometryHelper.addPoint( p
@@ -394,36 +429,9 @@
 
 	  geometry.computeBoundingBox();
 	  geometry.computeBoundingSphere();
-	if( document.getElementById( "showNormal" ).checked && !document.getElementById("showGrid").checked ) {
-			material	= new THREE.MeshNormalMaterial();
-			surfacemesh	= new THREE.Mesh( geometry, material );
-			surfacemesh.doubleSided = true;
-		}
-		else {
-			if( document.getElementById("showGrid").checked )
-			{
-				material	= THREE.GridGeometryMaterial();
-				material.uniforms.textureMap3.value = window.ttCommon.stack.smudge();
-				material.uniforms.cursorIconTex.value = window.ttCommon.cursorIcon;
-				material.defines.CALCULATE_COSINE_MERGE = document.getElementById( "sharpenTransition" ).checked?1:0;
-          			material.uniforms.cursorIconUp.value.set( 0, 0, 1 ); // this should update to the camera up 
 
-				surfacemesh	= new THREE.Mesh( geometry, material );
-				//cluster.THREE_solid.add( sector.THREE_solid = new THREE.Mesh( sector.solid_geometry.geometry, geometryShader ) );
-			}else {
-				material	= new THREE.MeshPhongMaterial({
-					color:0x700070
-				});
-				surfacemesh	= new THREE.Mesh( geometry, material );
-				surfacemesh.doubleSided = true;
-			}
-		}
-		var wirematerial = new THREE.MeshBasicMaterial({
-				color : 0xffffff
-			  , wireframe : true
-			});
-		wiremesh = new THREE.Mesh(geometry, wirematerial);
-		wiremesh.doubleSided = true;
+	surfacemesh.geometry.dispose();
+	surfacemesh.geometry = geometry;
 
 		scene.add( surfacemesh );
 		scene.add( wiremesh );
@@ -431,13 +439,14 @@
 		if( geometryNormals ) {
 			var linematerial = new THREE.LineBasicMaterial({
 				color : 0xffffff
-			  , vertexColors: THREE.VertexColors
+			  , vertexColors: true //THREE.VertexColors
 			});
 			lineSegments = new THREE.LineSegments( geometryNormals, linematerial );
 			scene.add( lineSegments );
 		}
 
 	  var bb = geometry.boundingBox;
+/*
 	  wiremesh.position.x = surfacemesh.position.x = -(bb.max.x + bb.min.x) / 2.0;
 	  wiremesh.position.y = surfacemesh.position.y = -(bb.max.y + bb.min.y) / 2.0;
 	  wiremesh.position.z = surfacemesh.position.z = -(bb.max.z + bb.min.z) / 2.0;
@@ -446,8 +455,8 @@
 				lineSegments.position.y = surfacemesh.position.y;
 				lineSegments.position.z = surfacemesh.position.z;
 			}
+*/	
 		}
-	
 		window.doInit = ()=>{
 		if( !init() )	animate();
 		}
@@ -511,7 +520,7 @@
 
 			// put a camera in the scene
 			camera	= new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 1, 10000 );
-			camera.position.set(0, 0, 3);
+			camera.position.set(0, 0, 40);
 			scene.add(camera);
 
 			// create a camera contol

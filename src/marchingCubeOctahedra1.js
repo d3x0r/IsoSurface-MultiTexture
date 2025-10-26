@@ -374,7 +374,7 @@ function toReal(hx,hy,hz) {
 
 
 	
-var MarchingTetradecahedra1 = (function () {
+var MarchingCubeoctahedra1 = (function () {
 
 	const _debug = false;
 	const zero_is_outside = true;
