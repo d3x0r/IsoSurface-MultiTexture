@@ -166,6 +166,7 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 			}
 
 	  var opts;
+	let refreshMesh = null;
 	  var result = mesher( newData, field.dims, opts = {
                   elements : fieldElements,
 		  minimize : document.getElementById( "minimize" ).checked,
@@ -176,6 +177,20 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 		  smoothShade : document.getElementById( "smoothShade" ).checked,
 		  showGrid : document.getElementById( "showGrid").checked,
 		  geometryHelper : geometryHelper,
+			addPoint( p, type1, type2, typeDelta ) {
+
+					return opts.geometryHelper.addPoint( p
+						 , null, null // texture, and uv[1,0] 
+						 , [0xA0,0x00,0xA0,255] // edge color
+						 , [0x11, 0x11, 0x11, 255] // face color
+						 , [0,0,0] // normal *needs to be updated*;
+						 , 100 // pow
+						 , false // use texture
+						 , false // flat
+						 , false // decal texture?
+						 , p  // modulous of this point.
+						 , type1, type2, typeDelta, false )
+			}
 		} );
 	  var end = (new Date()).getTime();
 		if( result !== null ) {

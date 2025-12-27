@@ -71,14 +71,16 @@
 
 	<script type="module">
 	import {MarchingTetrahedra4} from "./src/marchingtetrahedra4.js"
+	import {MarchingRhombicDodecaheda1} from "./src/marchingRhombicDodecahedra1.js"
 		var stats, scene, renderer, composer;
 		var camera, cameraControl;
 		var geometry, geometryNormals, surfacemesh, wiremesh, lineSegments;
 		var meshers = {
-		    'Marching Cuboctohedra (cell)' : MarchingCubeoctahedra1
+		   'Marching Cuboctohedra (cell)' : MarchingCubeoctahedra1
 		  , 'Marching Tetraheda 4 (DCL-volume)' : MarchingTetrahedra4
 		  , 'Marching Tetraheda 3 (DCL-plane)' : MarchingTetrahedra3
 		  , 'Marching Tetraheda 2 (DCL-cell)' : MarchingTetrahedra2
+		  ,  'Marching Rhombic Dodecahedra (cell)' : MarchingRhombicDodecaheda1
 		 // , 'Marching Cubes': MarchingCubes
 		 // , 'Marching Tetraheda' : MarchingTetrahedra
 		//	,  'Naive Surface Nets': SurfaceNets
@@ -117,7 +119,9 @@
 		  var mesher = meshers[ document.getElementById("mesher").value ]
 		var field  = testdata[ document.getElementById("datasource").value ]( document.getElementById("fillOutside").checked?-1
 			          :document.getElementById("fillInside").checked?1
-			          :0, (document.getElementById("mesher").value === "Marching Cuboctohedra (cell)" )
+			          :0, (document.getElementById("mesher").value === "Marching Cuboctohedra (cell)"
+					     || document.getElementById("mesher").value === "Marching Rhombic Dodecahedra (cell)"
+					     )
 			 )
 		var fieldElements  = testelements[ document.getElementById("datasource").value ]( field, document.getElementById("fillOutside").checked?-1
 			          :document.getElementById("fillInside").checked?1
