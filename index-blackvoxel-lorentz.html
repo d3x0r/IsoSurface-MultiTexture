@@ -178,6 +178,10 @@ import {myPerspective} from './src/three.js/my_perspective.js'
 		  geometryHelper : geometryHelper,
 		} );
 	  var end = (new Date()).getTime();
+		if( result !== null ) {
+			refreshMesh = result;
+			result = result();
+		}
 
 	  //Update statistics
 	  document.getElementById("resolution").value = field.dims[0] + 'x' + field.dims[1] + 'x' + field.dims[2];
